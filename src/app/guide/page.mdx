@@ -2,52 +2,90 @@
 title: 介绍
 ---
 
-[soybean-admin-react](https://github.com/soybeanjs/soybean-admin-react) 是一个清新优雅、高颜值且功能强大的后台管理模板，基于最新的前端技术栈，包括 **React19、React-Router-Dom V7、Redux/Toolkit、Vite6、TypeScript** 和 **UnoCSS**。它内置了丰富的主题配置和组件，代码规范严谨，并实现了自动化的文件路由系统。此外，还采用了基于 **ApiFox** 的在线 Mock 数据方案。
+[`SkyrocAdmin`](https://github.com/Ohh-889/skyroc-admin) 是一个与时俱进、功能强大、架构优雅的企业级中后台管理模板。
 
-**soybean-admin-react** 为您提供了一站式的后台管理解决方案，无需额外配置，开箱即用。同样也是一个快速学习前沿技术的最佳实践示例。
+**为什么选择 SkyrocAdmin？**
 
-**soybean-admin-react** 遵循 Ant Design 的设计理念，页面风格清新优雅、易于使用，相信您会喜欢它的页面布局与交互设计。
+- 🎯 **与时俱进**: 采用 2025 年最新前端技术栈（React 19、Vite 6、TypeScript 5.7），紧跟技术潮流
+- 💪 **功能强大**: 集成 TanStack Query、Redux Toolkit 等业界最佳实践，提供完整的企业级解决方案
+- ✨ **架构优雅**: 清晰的分层架构、模块化设计、完善的类型系统，代码质量堪称典范
+- 📐 **规范性强**: 严格的代码规范、统一的项目结构、标准化的开发流程，适合团队协作
 
-## 特性
+**SkyrocAdmin** 为您提供了一站式的后台管理解决方案，无需额外配置，开箱即用。同样也是一个快速学习前沿技术的最佳实践示例。
 
-- **前沿技术应用**：采用 React19、React-Router-Dom V7、Redux/toolkit、Vite6、TypeScript、UnoCSS 等最新流行技术栈。
-- **清晰的项目架构**：使用 pnpm monorepo 架构，结构简洁明了，方便维护。
-- **严格的代码规范**：遵循 [SoybeanJS 规范](/zh/standard/)，内置 eslint、prettier、simple-git-hooks 等，保证代码的高质量和一致性。
-- **TypeScript 支持**：支持严格的类型检查与大量内置 hook 的类型推导，只需定义简洁的类型，即可享受完善的类型提示。
-- **丰富的主题配置**：内置多种主题方案，完美结合 UnoCSS，实现灵活个性化的 UI 定制。
-- **内置国际化方案**：轻松支持多语言应用。
-- **增强型路由功能**：基于 React-Router V7 并扩展了类似 Next.js 的约定式文件路由，带来高效便捷的路由管理体验。
-- **自动化文件路由系统**：基于 [Elegant Router](https://github.com/mufeng889/react-auto-router) 自动生成路由声明及导入，简化配置。
-- **灵活的权限路由**：同时支持前端静态路由与后端动态路由。
-- **丰富的页面组件**：内置常用页面（403、404、500 等）与布局组件、主题配置组件等，开箱即可使用。
-- **命令行工具**：内置丰富的 CLI 工具，用于 git 提交、删除文件、项目发布等操作。
-- **移动端适配**：完美支持移动端适配，自适应布局让您无需单独编写移动端代码。
-- **良好的错误处理**：在发生错误时可自动捕获，并显示友好界面，同时支持在组件内进行埋点监控上报。
+**SkyrocAdmin** 遵循 Ant Design 的设计理念，页面风格清新优雅、易于使用，相信您会喜欢它的页面布局与交互设计。
 
-## 版本
+## 核心技术栈
 
-### React 版本
+- 🚀 **React 19** - 最新的 React 版本，享受最前沿的特性
+- 🛤️ **React Router V7** - 强大的路由管理系统
+- 📦 **Redux Toolkit** - 现代化的状态管理方案
+- 🔄 **TanStack Query (React Query) 5** - 强大的服务端状态管理方案
+- 🎨 **Ant Design 5.24** - 企业级 UI 组件库
+- ⚡️ **Vite 6** - 极速的开发构建工具
+- 🎯 **TypeScript 5.7** - 完善的类型系统
+- 🌈 **UnoCSS** - 高性能的原子化 CSS 引擎
+- 📦 **pnpm monorepo** - 高效的包管理方案
 
-- [在线预览](https://react.soybeanjs.cn)
-- [Github 仓库](https://github.com/soybeanjs/soybean-admin-react)
+## 项目特点
 
-### Vue 版本
+- 💡 **代码质量** - 代码规范严谨，架构清晰优雅，完善的 TypeScript 类型支持
+- ⚡️ **开箱即用** - 无需复杂配置，快速启动项目开发
+- 🛠️ **丰富组件** - 内置大量业务组件和主题配置选项
+- 📋 **约定式路由** - 自动化的文件路由系统，类似 Next.js 的开发体验
+- 🔄 **数据管理** - 集成 TanStack Query，优雅的服务端状态管理，自动缓存、重新验证
+- 🏗️ **架构设计** - 分层清晰的 Service 层架构，URL、Keys、Hooks 分离，高度模块化
+- 🎨 **主题系统** - 支持暗黑模式、多主题色、布局配置等
+- 🌍 **国际化** - 完整的 i18n 方案，支持多语言切换
+- 🔐 **权限管理** - 基于角色的权限控制系统（RBAC）
+- 📱 **响应式设计** - 完美适配移动端和桌面端
+- 🎯 **乐观 UI** - 自动错误捕获和友好的错误界面，支持组件级监控埋点
+- 🔧 **CLI 工具** - 内置命令行工具（Git 提交规范、代码清理、版本发布等）
+- ⚙️ **Keep-Alive** - 页面缓存功能，提升用户体验
+- 🎭 **动画效果** - 基于 Motion 的流畅动画系统
 
-- **NaiveUI 版本**:
-  - [在线预览](https://naive.soybeanjs.cn/)
-  - [Github 仓库](https://github.com/soybeanjs/soybean-admin)
+## 版本信息
 
-- **AntDesignVue 版本**:
-  - [在线预览](https://antd.soybeanjs.cn/)
-  - [Github 仓库](https://github.com/soybeanjs/soybean-admin-antd)
+当前版本：**v2.4.0**
 
-- **旧版 (Legacy)**:
-  - [在线预览](https://legacy.soybeanjs.cn/)
-  - [Github 仓库](https://github.com/soybeanjs/soybean-admin/tree/legacy)
+### 技术栈版本
 
-## 文档
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| React | 19.0.0 | 核心框架 |
+| React Router | 7.2.0 | 路由管理 |
+| Redux Toolkit | 2.5.1 | 状态管理 |
+| TanStack Query | 5.90.8 | 数据获取和缓存 |
+| Ant Design | 5.24.1 | UI 组件库 |
+| Vite | 6.1.1 | 构建工具 |
+| TypeScript | 5.7.3 | 类型系统 |
+| UnoCSS | 66.0.0 | 原子化 CSS |
+| Motion | 12.4.7 | 动画库 |
+| pnpm | 10.4.1 | 包管理器 |
 
-- 文档仓库：[soybean-admin-react-docs](https://github.com/soybeanjs/soybean-admin-react-docs)，基于 [Nextra](https://nextra.site/) 构建。如果发现文档有任何问题或可以改进的地方，欢迎随时提交 [PR](https://github.com/soybeanjs/soybean-admin-react-docs/pulls) 帮助我们完善。
+### 在线预览
+
+- **React19（v2）版本:**
+  - [预览地址](https://skyroc-admin.com/)
+  - [Github 仓库](https://github.com/Ohh-889/skyroc-admin)
+  - [Gitee 仓库](https://gitee.com/sjgk_dl/react-admin)
+
+- **React18 版本 (v1):**
+  - [预览地址](https://admin-v1.skyroc.me/)
+
+### 文档
+
+- **React19（v2）版本:**
+  - [在线文档](https://admin-docs.skyroc.me) - 详尽的 Ant Design 风格文档
+- **React18（v1）版本:**
+  - [在线文档](https://admin-docsv1.skyroc.me) - v1 版本文档
+
+## 分支
+
+- `master` 分支: 最新稳定版本,基于 React19 + ReactRouter V7  版本
+- `v1` 分支: 基于 React18 + ReactRouter V6 版本
+
+有问题都是会进行修复,如果需要使用旧版本,请切换到对应分支。 v1 在未来3-5年依然会是市面上较为先进 功能强大的版本
 
 ## 需要掌握的基础知识
 
@@ -88,23 +126,41 @@ title: 介绍
 
 ## 问题反馈
 
+`SkyrocAdmin` 是完全开源免费的项目，在帮助开发者更方便地进行中大型管理系统开发，同时也提供微信和 QQ 交流群，使用问题欢迎在群内提问。
+
 export const Feedback = () => {
   return (
     <div>
-      <p>添加以下微信，受邀进交流群</p>
-      <img
-        src="https://soybeanjs-1300612522.cos.ap-guangzhou.myqcloud.com/uPic/wechat-soybeanjs.jpg"
-        style={{ width: '200px' }}
-      />
+      <div>
+        <p>QQ交流群</p>
+        <img
+          src="https://assets.skyroc.me/qq-group01.jpg"
+          style={{ width: '200px' }}
+        />
+      </div>
+      <div>
+        <p>添加下面微信添加作者，邀请进微信群</p>
+        <img
+          src="https://assets.skyroc.me/wx-avatar.jpg"
+          style={{ width: '200px' }}
+        />
+      </div>
+      <div>
+        <p>微信群</p>
+        <img
+          src="https://assets.skyroc.me/wx-group01.jpg"
+          style={{ width: '200px' }}
+        />
+      </div>
     </div>
   );
 };
 
-- 如果在使用中遇到任何问题，或者有改进建议，欢迎在 [GitHub Issues](https://github.com/soybeanjs/soybean-admin-react/issues) 中进行反馈。
+- 如果在使用中遇到任何问题，或者有改进建议，欢迎在 [GitHub Issues](https://github.com/Ohh-889/skyroc-admin/issues) 中进行反馈。
 - 或直接添加下方微信加入讨论群：
 
 <Feedback />
 
 ## 祝福与展望
 
-非常感谢你选择 **soybean-admin-react**，愿它能在你的工作和学习中带来便利与收获。祝所有使用者在工作和生活中都能顺利进步、健康平安。欢迎大家积极参与、贡献代码，共同将 **soybean-admin-react** 打造得更加完善与强大！
+非常感谢你选择 **skyroc-admin-react**，愿它能在你的工作和学习中带来便利与收获。祝所有使用者在工作和生活中都能顺利进步、健康平安。欢迎大家积极参与、贡献代码，共同将 **skyroc-admin-react** 打造得更加完善与强大！
