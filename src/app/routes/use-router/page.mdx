@@ -18,23 +18,30 @@ export default function Example() {
     back,
     forward,
     go,
-    goHome,
-    replace,
     reload,
     navigateUp,
     push,
+    replace,
+    goTo,
+    goHome,
+    getLocation,
+    getPathname,
+    getSearch,
+    getHash,
+    getState,
+    canGoBack,
     resetRoutes
   } = useRouter();
 
   return (
     <div>
       <button onClick={() => navigate('/about')}>Go to About</button>
-      <button onClick={() => push('/blog', { page: 2 })}>Push /blog?page=2</button>
+      <button onClick={() => push('/blog', { query: { page: 2 } })}>Push /blog?page=2</button>
       <button onClick={() => back()}>Go Back</button>
       <button onClick={() => forward()}>Go Forward</button>
       <button onClick={() => go(2)}>Go +2</button>
       <button onClick={() => goHome()}>Go Home</button>
-      <button onClick={() => replace('/contact')}>Replace with /contact</button>
+      <button onClick={() => replace('/contact', { query: { from: 'example' } })}>Replace with /contact</button>
       <button onClick={() => reload()}>Reload current route</button>
       <button onClick={() => navigateUp()}>Navigate Up (..)</button>
       <button onClick={() => resetRoutes()}>Reset Routes</button>
@@ -48,16 +55,30 @@ export default function Example() {
 ```ts copy
 function useRouter() {
   return {
+    // 基础导航方法
+    navigate,       // 路由跳转，可传入 path 或 delta
     back,           // 回到上一页
     forward,        // 前进到下一页
     go,             // 跳转到特定的历史记录位置
-    goHome,         // 跳转到首页 '/'
-    navigate,       // 路由跳转，可传入 path 或 delta
-    navigateUp,     // 跳转到上一级路由 '..'
-    push,           // 带 query/state 的路由跳转
-    reactRouter,    // 原始的 React Router 实例
     reload,         // 刷新当前页面 (相当于 navigate(0))
-    replace,        // 使用替换模式跳转 (不会添加历史记录)
+    navigateUp,     // 跳转到上一级路由 '..'
+
+    // 扩展导航方法
+    push,           // 推入新历史记录，支持 query 参数
+    replace,        // 替换当前历史记录，支持 query 参数
+    goTo,           // 导航到指定路径（push 的语义化别名）
+    goHome,         // 跳转到首页（globalConfig.homePath）
+
+    // 信息获取方法
+    getLocation,    // 获取当前位置信息
+    getPathname,    // 获取当前路径名
+    getSearch,      // 获取当前查询字符串
+    getHash,        // 获取当前 hash
+    getState,       // 获取当前状态
+    canGoBack,      // 检查是否可以后退
+
+    // 其他
+    reactRouter,    // 原始的 React Router 实例
     resetRoutes     // 重置路由
   };
 }
@@ -88,11 +109,35 @@ function useRouter() {
 - **参数**：
   - `delta`: 一个整数。如果是负数代表后退，正数代表前进。
 
-### `replace(path: To)`
+### `replace(path: To, options?: ExtendedNavigateOptions)`
 
-- **说明**：使用替换模式跳转到 `path`，不会在浏览器历史中添加新纪录。
+- **说明**：替换当前历史记录并导航到新路径，不会在浏览器历史中添加新记录。支持完整的 RouterNavigateOptions 和 query 参数。
 - **参数**：
-  - `path`: 要跳转到的目标路由路径。
+  - `path`: 要跳转到的目标路由路径
+  - `options`: 扩展的导航选项
+    - `query`: 查询参数对象
+    - `state`: 路由状态对象
+    - 其他 React Router 导航选项
+
+**示例**：
+
+```tsx
+const router = useRouter();
+
+// 基础替换
+router.replace('/login');
+
+// 带查询参数替换
+router.replace('/dashboard', {
+  query: { tab: 'overview' }
+});
+// 跳转到：/dashboard?tab=overview
+
+// 带状态替换
+router.replace('/settings', {
+  state: { redirect: '/profile' }
+});
+```
 
 ### `reload()`
 
@@ -104,35 +149,437 @@ function useRouter() {
 - **说明**：跳转到当前路由的上一层路由。
 - **等价于**：`reactRouter.navigate('..')`。
 
-### `goHome()`
+### `goHome(options?: RouterNavigateOptions)`
 
-- **说明**：跳转到网站根路径 `/`。
-- **等价于**：`reactRouter.navigate('/')`。
-
-### `push(path: string, query?: LocationQueryRaw, state?: any, _replace?: boolean)`
-
-- **说明**：带查询参数或 `state` 跳转到 `path`。
+- **说明**：跳转到应用首页路径（由 `globalConfig.homePath` 配置）。
 - **参数**：
-  1. `path`: 路由路径字符串。
-  2. `query` (可选): 一个对象，用来生成查询字符串，如 `{page: 2}` 会变成 `?page=2`。
-  3. `state` (可选): 路由状态对象，可在目标路由中通过 `location.state` 获取。
-  4. `_replace` (可选): 若为 `true`，则使用替换模式；默认值为 `false`。
-- **说明**：会先通过 `stringifyQuery` 方法将 `query` 转为查询字符串，并附加到 `path` 上。然后再调用 `reactRouter.navigate(_path, { replace: _replace, state })`。
+  - `options`: React Router 导航选项（可选）
+
+**示例**：
+
+```tsx
+const router = useRouter();
+
+// 基础用法
+router.goHome();
+
+// 带选项跳转
+router.goHome({ replace: true });
+```
+
+### `push(path: To, options?: ExtendedNavigateOptions)`
+
+- **说明**：推入新的历史记录并导航到新路径。支持完整的 RouterNavigateOptions 和 query 参数。
+- **参数**：
+  - `path`: 路由路径字符串或对象
+  - `options`: 扩展的导航选项
+    - `query`: 查询参数对象，如 `{page: 1, size: 10}` 会变成 `?page=1&size=10`
+    - `state`: 路由状态对象，可在目标路由中通过 `location.state` 获取
+    - `replace`: 若为 `true`，则使用替换模式（默认为 `false`）
+    - 其他 React Router 导航选项
+
+**示例**：
+
+```tsx
+const router = useRouter();
+
+// 基础用法
+router.push('/users');
+
+// 带查询参数
+router.push('/users', { query: { page: 1, size: 10 } });
+// 跳转到：/users?page=1&size=10
+
+// 带状态和选项
+router.push('/users', {
+  query: { page: 1 },
+  state: { from: 'home' },
+  preventScrollReset: true
+});
+
+// 数组类型的查询参数
+router.push('/search', {
+  query: { tags: ['React', 'TypeScript', 'Vite'] }
+});
+// 跳转到：/search?tags=React&tags=TypeScript&tags=Vite
+
+// 替换模式（向后兼容）
+router.push('/users', { replace: true });
+```
 
 ### `reactRouter`
 
 - **说明**：直接暴露原始的 `reactRouter` 实例（由内部的 `initRouter()` 提供），可进行更底层或自定义的操作。
 
+### `goTo(path: To, options?: ExtendedNavigateOptions)`
+
+- **说明**：导航到指定路径的语义化方法，功能与 `push` 相同
+- **参数**：
+  - `path`：目标路径
+  - `options`：扩展的导航选项，支持 `query` 参数
+
+**示例**：
+
+```tsx
+const router = useRouter();
+
+router.goTo('/products', {
+  query: { category: 'electronics', sort: 'price' }
+});
+// 跳转到：/products?category=electronics&sort=price
+```
+
 ### `resetRoutes()`
 
 - **说明**：重置当前所有路由配置，一般用于需要在运行时动态更改路由时的场景。此方法来自 `initRouter()` 中暴露的 `resetRoutes`。
+
+**示例**：
+
+```tsx
+const router = useRouter();
+
+// 退出登录时重置路由
+async function handleLogout() {
+  await logoutAPI();
+  router.resetRoutes();
+  router.push('/login');
+}
+```
+
+---
+
+## 信息获取方法
+
+以下方法用于获取当前路由的各种信息：
+
+### `getLocation(): Location`
+
+- **说明**：获取当前位置信息
+- **返回值**：Location 对象，包含 pathname、search、hash、state、key
+
+```tsx
+const router = useRouter();
+const location = router.getLocation();
+
+console.log(location.pathname);  // '/users/123'
+console.log(location.search);    // '?page=1'
+console.log(location.hash);      // '#section-1'
+console.log(location.state);     // { from: 'home' }
+```
+
+### `getPathname(): string`
+
+- **说明**：获取当前路径名
+- **返回值**：当前 URL 的路径部分
+
+```tsx
+const router = useRouter();
+const pathname = router.getPathname();
+console.log(pathname);  // '/users/123'
+```
+
+### `getSearch(): string`
+
+- **说明**：获取当前查询字符串
+- **返回值**：包含 `?` 的查询字符串
+
+```tsx
+const router = useRouter();
+const search = router.getSearch();
+console.log(search);  // '?page=1&size=10'
+```
+
+### `getHash(): string`
+
+- **说明**：获取当前 hash 值
+- **返回值**：包含 `#` 的 hash 字符串
+
+```tsx
+const router = useRouter();
+const hash = router.getHash();
+console.log(hash);  // '#section-1'
+```
+
+### `getState(): any`
+
+- **说明**：获取当前路由状态
+- **返回值**：路由状态对象
+
+```tsx
+const router = useRouter();
+const state = router.getState();
+console.log(state);  // { from: 'home', userId: 123 }
+```
+
+### `canGoBack(): boolean`
+
+- **说明**：检查是否可以后退（基于浏览器历史记录）
+- **返回值**：布尔值，表示是否可以后退
+
+```tsx
+const router = useRouter();
+
+// 条件渲染返回按钮
+{router.canGoBack() && (
+  <button onClick={router.back}>返回</button>
+)}
+```
 
 ---
 
 ## 注意事项
 
-- 基于 [React Router](https://reactrouter.com/) 进行的封装。若需要使用更底层的路由 API（例如 `useLocation`、`useParams` 等），可在组件中直接导入 `react-router-dom` 的相关 Hook。
-- `push` 方法相对于 `navigate` 在使用查询参数和路由 `state` 时更方便；若只需简单跳转，推荐直接使用 `navigate`。
-- `resetRoutes` 的实现依赖项目内的路由初始化逻辑，如需自定义路由配置或多次刷新，需要自行扩展并保证该方法可行。
+1. **基于 React Router 封装**
+   - 若需要使用更底层的路由 API（例如 `useLocation`、`useParams` 等），可在组件中直接导入 `react-router-dom` 的相关 Hook
 
-通过 `useRouter`，你可以在任何函数式组件中快速调用导航相关方法，简化常见的路由操作，让代码更为简洁。希望它能给你带来便利！
+2. **查询参数处理**
+   - `push`、`replace`、`goTo` 方法都支持 `query` 选项，会自动序列化为查询字符串
+   - 查询参数的值始终是字符串类型，需要时记得转换
+
+3. **路由状态**
+   - 使用 `state` 传递的数据在页面刷新后会丢失
+   - 重要数据应存储在 URL 参数或持久化存储中
+
+4. **首页路径**
+   - `goHome()` 跳转到的是 `globalConfig.homePath` 配置的路径
+   - 不同用户或角色可能有不同的首页路径
+
+5. **路由重置**
+   - `resetRoutes` 会清除所有动态添加的路由
+   - 一般在用户退出登录或切换角色时使用
+
+---
+
+## 应用场景
+
+### 1. 智能返回按钮
+
+```tsx
+function DetailPage() {
+  const router = useRouter();
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.goHome();
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={handleBack}>
+        {router.canGoBack() ? '返回' : '回到首页'}
+      </button>
+    </div>
+  );
+}
+```
+
+### 2. 获取当前位置信息
+
+```tsx
+function CurrentLocation() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const location = router.getLocation();
+
+    // 记录页面访问
+    logPageView({
+      pathname: location.pathname,
+      search: location.search,
+      referrer: location.state?.from
+    });
+  }, [router]);
+
+  return <div>当前路径：{router.getPathname()}</div>;
+}
+```
+
+### 3. Tab 切换避免历史堆积
+
+```tsx
+function DashboardTabs() {
+  const router = useRouter();
+  const route = useRoute<any, { tab: string }>();
+
+  const activeTab = route.query.tab || 'overview';
+
+  const handleTabChange = (newTab: string) => {
+    // 使用 replace 避免历史记录堆积
+    router.replace('/dashboard', {
+      query: { tab: newTab }
+    });
+  };
+
+  return (
+    <Tabs value={activeTab} onChange={handleTabChange}>
+      <Tab value="overview">概览</Tab>
+      <Tab value="analytics">分析</Tab>
+      <Tab value="reports">报表</Tab>
+    </Tabs>
+  );
+}
+```
+
+### 4. 表单提交后跳转
+
+```tsx
+function CreateProduct() {
+  const router = useRouter();
+
+  const handleSubmit = async (data: ProductData) => {
+    try {
+      const result = await createProductAPI(data);
+
+      // 成功后跳转到详情页，带上成功消息
+      router.push(`/products/${result.id}`, {
+        state: { message: '产品创建成功' }
+      });
+    } catch (error) {
+      message.error('创建失败');
+    }
+  };
+
+  return <ProductForm onSubmit={handleSubmit} />;
+}
+```
+
+### 5. 条件导航
+
+```tsx
+function ProductDetail({ id }: Props) {
+  const router = useRouter();
+  const { hasPermission } = useAuth();
+
+  const handleEdit = () => {
+    if (hasPermission('product:edit')) {
+      router.push(`/products/${id}/edit`);
+    } else {
+      message.error('您没有编辑权限');
+      router.push('/403');
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={handleEdit}>编辑</button>
+    </div>
+  );
+}
+```
+
+### 6. 路由信息监听
+
+```tsx
+function PageTracker() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // 获取完整的位置信息
+    const location = router.getLocation();
+
+    // 记录页面访问
+    analytics.track('page_view', {
+      pathname: router.getPathname(),
+      search: router.getSearch(),
+      hash: router.getHash(),
+      referrer: location.state?.from
+    });
+  }, [router.getPathname()]);
+
+  return null;
+}
+```
+
+### 7. 搜索功能
+
+```tsx
+function SearchPage() {
+  const router = useRouter();
+  const [keyword, setKeyword] = useState('');
+  const [filters, setFilters] = useState<SearchFilters>({});
+
+  const handleSearch = () => {
+    router.push('/search', {
+      query: {
+        q: keyword,
+        category: filters.category,
+        tags: filters.tags,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice
+      }
+    });
+  };
+
+  return (
+    <div>
+      <SearchInput value={keyword} onChange={setKeyword} />
+      <FilterPanel value={filters} onChange={setFilters} />
+      <button onClick={handleSearch}>搜索</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 完整类型定义
+
+```ts
+// 路由上下文类型
+export type RouterContextType = {
+  // React Router 实例
+  reactRouter: Router;
+
+  // 基础导航方法
+  navigate: (path: To | null, options?: RouterNavigateOptions) => Promise<void>;
+  back: () => void;
+  forward: () => void;
+  go: (delta: number) => void;
+  reload: () => void;
+  navigateUp: () => void;
+
+  // 扩展导航方法
+  push: (path: To, options?: ExtendedNavigateOptions) => void;
+  replace: (path: To, options?: ExtendedNavigateOptions) => void;
+  goTo: (path: To, options?: ExtendedNavigateOptions) => void;
+  goHome: (options?: RouterNavigateOptions) => void;
+
+  // 信息获取方法
+  getLocation: () => Location;
+  getPathname: () => string;
+  getSearch: () => string;
+  getHash: () => string;
+  getState: () => any;
+  canGoBack: () => boolean;
+
+  // 路由管理
+  resetRoutes: () => void;
+};
+
+// 扩展的导航选项
+type ExtendedNavigateOptions = RouterNavigateOptions & {
+  query?: LocationQueryRaw;  // 查询参数对象
+};
+
+// 查询参数类型
+export type LocationQueryValue = string | null;
+export type LocationQuery = Record<string, LocationQueryValue | LocationQueryValue[]>;
+export type LocationQueryValueRaw = LocationQueryValue | number | undefined;
+export type LocationQueryRaw = Record<string | number, LocationQueryValueRaw | LocationQueryValueRaw[]>;
+```
+
+---
+
+## 相关文档
+
+- [核心路由实例](/routes/core) - 了解路由实例的完整 API
+- [查询参数处理](/routes/query) - 了解查询参数的解析和序列化
+- [useRoute](/routes/use-route) - 了解如何获取路由信息
+- [RouterProvider](/routes/router-provider) - 路由系统的入口组件
+
+---
+
+通过 `useRouter`，你可以在任何函数式组件中快速调用导航相关方法，简化常见的路由操作，让代码更为简洁。所有方法都与源代码保持一致，确保了 API 的准确性和可靠性。
