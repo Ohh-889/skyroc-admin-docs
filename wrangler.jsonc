@@ -1,6 +1,0 @@
-{
-  "name": "skyroc-admin-docs",
-  "compatibility_date": "2025-11-12",
-  "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": ".vercel/output/static"
-}

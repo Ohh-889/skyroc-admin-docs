@@ -1,3 +1,7 @@
-.next
 node_modules
-.vercel
+/dist
+/docs-dist
+.dumi/tmp
+.dumi/tmp-test
+.dumi/tmp-production
+.DS_Store

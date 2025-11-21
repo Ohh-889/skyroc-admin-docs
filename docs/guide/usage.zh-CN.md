@@ -1,0 +1,80 @@
+---
+group: 系统图标
+order: 2
+title: 图标教程
+---
+
+## 一、静态用法：直接写在 template 中
+
+- **iconify**
+
+  - 安装 vscode 智能提示的插件: [Iconify IntelliSense](https://marketplace.visualstudio.com/items?itemName=antfu.iconify)
+
+  - 找图标：网址 [https://icones.js.org/](https://icones.js.org/) 或者 vscode 安装 - [Icônes](https://marketplace.visualstudio.com/items?itemName=afzalsayed96.icones)
+
+  - 确定图标名字：找到图标后复制名字 如：'mdi:emoticon' 或者 'mdi-emoticon'，则对应的 react 的 template 为
+
+```ts
+    <div>
+      <IconMdiEmoticon class="text-24px text-red" />
+      <IconMdiEmoticon style="font-size:24px;color:#f00;" />
+    </div>
+```
+
+### 提示<Badge>tip</Badge>
+
+- 'icon-' 为预设的前缀, 在.env 里面设置变量 VITE_ICON_PREFIX
+
+- 设置样式：同 html 标签一样直接应用 style 属性或者 class 属性; 通过设置 color 和 font-size 属性设置对应的颜色和大小
+
+### **本地 svg 图标**
+
+- 在 src/assets/svg-icon 目录下选择一个 svg，取它的文件名，例如: 'custom-icon.svg'
+
+- 则对应的 react 的 template 为
+
+    ```html
+    <IconLocalCustomIcon class="text-24px text-red" />
+    ```
+
+### 提示<Badge>tip</Badge>
+
+- 'icon-local' 为预设的前缀, 在.env 里面设置变量 VITE_ICON_LOCAL_PREFIX
+
+## 二、动态渲染: 根据图标名称渲染对应图标
+
+- **iconify**
+
+  - 确定图标名字，如：'mdi-emoticon'
+
+  - 动态渲染
+
+    ```html
+    <SvgIcon icon="mdi-emoticon" />
+    ```
+
+  - 多个图标动态渲染
+
+    ```html
+    <SvgIcon
+      v-for="icon in icons"
+      :key="icon"
+      :icon="icon"
+      className="text-24px text-red"
+    />
+    ```
+
+- **本地 svg 图标**
+
+  - 确定 svg 文件名，例如: 'custom-icon.svg'
+
+  - 动态渲染
+
+    ```html
+    <SvgIcon local-icon="custom-icon" style="font-size:24px;color:#f00;" />
+    ```
+
+### 提示<Badge>tip</Badge>
+
+- svg-icon 为全局组件，已经注册过了，直接在 template 中应用，icon 属性为 iconify 图标名称, local-icon 为本地 svg 图标的文件名
+
