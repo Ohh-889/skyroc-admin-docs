@@ -23,25 +23,25 @@ export const metadata: Metadata = {
   appleWebApp: {
     title: 'Soybean-React-Docs'
   },
-  applicationName: 'soybean-admin-react-docs',
+  applicationName: 'skyroc-admin-react-docs',
   authors: [{ name: 'Ohh-889', url: 'https://github.com/Ohh-889' }],
-  description: 'soybean-admin-react官方文档',
-  generator: 'Soybean-React',
+  description: 'skyroc-admin-react官方文档',
+  generator: 'skyroc-admin',
   icons: {
     icon: '/favicon.svg'
   },
-  keywords: ['Soybean-React', 'Soybean-React-Docs', 'react', 'admin', 'template'],
+  keywords: ['skyroc-admin', 'skyroc-admin-docs', 'react', 'admin', 'template'],
   title: {
-    default: 'Soybean-React-Docs',
-    template: '%s | Soybean-React'
+    default: 'skyroc-admin-docs',
+    template: '%s | skyroc-admin'
   }
 };
 const navbar = (
   <Navbar
     chatIcon={<QQ className="w-[24px] h-[24px] " />}
-    chatLink="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=mSrGm_rLhAvbw2zADMMLOjy3YRz1IP2e&authKey=ejaXbXO2D20RVPtEQG%2BA9ZiK%2Fk6m7BBOvs6Vf298Ky%2F3Mc7KTEKvJwcv%2FOtERMEp&noverify=0&group_code=940903238"
+    chatLink="https://qun.qq.com/universal-share/share?ac=1&authKey=pzAdzMMdtdAGaqaxEFDu2mJVqRDVftIy0jZC3sXaZhiYsB3ODixc2%2F9hjI3ZxyId&busi_data=eyJncm91cENvZGUiOiIxMDI1MDczNTYyIiwidG9rZW4iOiJoN01icUgwVFlQOXE2VXM5NXo0VjF3bWxqQm9Hdlo1ZEZhWmxzaTg3WTlkZnBFeVJqMW5rSThVanUxdSt6N0dXIiwidWluIjoiMTUwOTMyNjI2NiJ9&data=mB42uAgndU14YMpWumQRfu39SFzrCmh4JdwPl3nKJVdb4J3zdO68DlmT3atlOeGqwL_bon2QmITo6t4y54YDjQ&svctype=4&tempid=h5_group_info"
     logo={<Logo className="w-[32px] h-[32px] text-[var(--soybean)]" />}
-    projectLink="https://github.com/soybeanjs/soybean-admin-react"
+    projectLink="https://github.com/Ohh-889/skyroc-admin"
   />
 );
 
@@ -58,7 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Layout
-          docsRepositoryBase="https://github.com/soybeanjs/soybean-admin-react-docs"
+          docsRepositoryBase="https://github.com/Ohh-889/skyroc-admin-docs"
           editLink="在github上编辑此页面"
           footer={<GlobalFooter />}
           navbar={navbar}
