@@ -1,0 +1,668 @@
+---
+title: 后端路由转换
+---
+
+# 后端路由转换
+
+在动态路由模式下,路由配置从后端接口获取,需要将后端返回的路由数据转换为 React Router 可以识别的格式。本模块提供了完整的路由转换功能,支持布局、页面组件、重定向、缓存等特性。
+
+## transformBackendRoutesToReactRoutes - 批量转换
+
+### 函数签名
+
+```ts
+export function transformBackendRoutesToReactRoutes(
+  backendRoutes: Api.Route.BackendRoute[]
+): {
+  cacheRoutes: string[];
+  routes: RouteObject[];
+}
+```
+
+### 功能说明
+
+将后端返回的路由数组批量转换为 React Router 格式,同时收集需要缓存的路由路径。
+
+### 返回值
+
+```ts
+{
+  cacheRoutes: string[];    // 需要缓存的路由路径列表
+  routes: RouteObject[];    // React Router 路由对象数组
+}
+```
+
+### 使用示例
+
+```ts
+import { transformBackendRoutesToReactRoutes } from '@/features/router/shared';
+
+// 后端返回的路由数据
+const backendRoutes = [
+  {
+    name: 'dashboard',
+    path: '/dashboard',
+    component: 'page.Dashboard',
+    handle: {
+      title: '仪表板',
+      keepAlive: true
+    }
+  },
+  {
+    name: 'users',
+    path: '/users',
+    component: 'page.UserList',
+    children: [
+      {
+        name: 'user-detail',
+        path: ':id',
+        component: 'page.UserDetail'
+      }
+    ]
+  }
+];
+
+// 转换为 React Router 格式
+const { cacheRoutes, routes } = transformBackendRoutesToReactRoutes(backendRoutes);
+
+console.log(cacheRoutes);
+// 输出: ['/dashboard']
+
+console.log(routes);
+// 输出: [
+//   {
+//     id: 'dashboard',
+//     path: '/dashboard',
+//     lazy: async () => ({ Component: DashboardPage }),
+//     handle: { title: '仪表板', keepAlive: true }
+//   },
+//   {
+//     id: 'users',
+//     path: '/users',
+//     lazy: async () => ({ Component: UserListPage }),
+//     children: [...]
+//   }
+// ]
+```
+
+## 后端路由数据格式
+
+### BackendRoute 接口
+
+```ts
+interface BackendRoute {
+  // 路由名称(必需)
+  name: string;
+
+  // 路由路径(必需)
+  path: string;
+
+  // 页面组件名称(可选)
+  // 格式: 'page.ComponentName'
+  // 例如: 'page.Dashboard', 'page.UserList'
+  component?: string;
+
+  // 布局组件名称(可选)
+  // 格式: 'layout.LayoutName'
+  // 例如: 'layout.Base', 'layout.Admin'
+  layout?: string;
+
+  // 重定向路径(可选)
+  // 当访问该路由时,自动重定向到指定路径
+  redirect?: string;
+
+  // 路由元信息(可选)
+  handle?: RouteMeta;
+
+  // 父路由名称(可选)
+  // 用于指定路由的父级关系
+  parent?: string;
+
+  // 子路由(可选)
+  children?: BackendRoute[];
+}
+```
+
+### RouteMeta 接口
+
+```ts
+interface RouteMeta {
+  // 路由标题
+  title: string;
+
+  // 国际化键
+  i18nKey?: string;
+
+  // 路由图标
+  icon?: string;
+
+  // 是否缓存
+  keepAlive?: boolean;
+
+  // 是否为常量路由
+  constant?: boolean;
+
+  // 角色权限
+  roles?: string[];
+
+  // 路由排序
+  order?: number;
+
+  // 外部链接
+  href?: string;
+
+  // 是否在菜单中隐藏
+  hideInMenu?: boolean;
+
+  // 激活的菜单键
+  activeMenu?: string;
+
+  // 是否支持多标签
+  multiTab?: boolean;
+
+  // 固定标签页位置
+  fixedIndexInTab?: number;
+
+  // 查询参数
+  query?: Array<{ key: string; value: string }> | null;
+}
+```
+
+## 转换规则
+
+### 1. 组件类型识别
+
+转换过程会自动识别路由是布局组件还是页面组件:
+
+```ts
+// 布局组件: layout 字段不为空,且能在 layouts 映射中找到
+{
+  name: 'base',
+  path: '/',
+  layout: 'layout.Base'  // 将匹配 layouts['Base']
+}
+
+// 页面组件: component 字段不为空,且能在 pages 映射中找到
+{
+  name: 'dashboard',
+  path: '/dashboard',
+  component: 'page.Dashboard'  // 将匹配 pages['Dashboard']
+}
+```
+
+### 2. 前缀处理
+
+组件名称会自动去除前缀:
+
+```ts
+// 输入
+layout: 'layout.Base'
+component: 'page.Dashboard'
+
+// 处理后
+layoutKey = 'Base'      // 去除 'layout.' 前缀
+componentKey = 'Dashboard'  // 去除 'page.' 前缀
+```
+
+### 3. Index 路由生成
+
+当路由同时有组件和子路由时,会自动创建 index 路由:
+
+```ts
+// 后端路由
+{
+  name: 'users',
+  path: '/users',
+  component: 'page.UserList',  // 有组件
+  children: [                   // 有子路由
+    {
+      name: 'user-detail',
+      path: ':id',
+      component: 'page.UserDetail'
+    }
+  ]
+}
+
+// 转换后的 React Router 路由
+{
+  id: 'users',
+  path: '/users',
+  lazy: () => ({ Component: Outlet }),  // 父路由渲染 Outlet
+  children: [
+    {
+      id: 'users-index',
+      index: true,
+      lazy: () => ({ Component: UserListPage })  // 实际组件在 index 路由中
+    },
+    {
+      id: 'user-detail',
+      path: ':id',
+      lazy: () => ({ Component: UserDetailPage })
+    }
+  ]
+}
+```
+
+### 4. 缓存路由收集
+
+转换过程会自动收集需要缓存的路由:
+
+```ts
+// 规则1: 如果路由有 index 路由,缓存路由使用父路由的 path
+{
+  name: 'users',
+  path: '/users',
+  component: 'page.UserList',
+  handle: { keepAlive: true },  // 需要缓存
+  children: [...]
+}
+// 收集: cacheRoutes.push('/users')
+
+// 规则2: 如果路由没有 index 路由,直接使用当前路由的 path
+{
+  name: 'dashboard',
+  path: '/dashboard',
+  component: 'page.Dashboard',
+  handle: { keepAlive: true }
+}
+// 收集: cacheRoutes.push('/dashboard')
+```
+
+### 5. 重定向处理
+
+如果路由配置了 redirect,会在 loader 中返回重定向:
+
+```ts
+// 后端路由
+{
+  name: 'home',
+  path: '/',
+  redirect: '/dashboard'
+}
+
+// 转换后
+{
+  id: 'home',
+  path: '/',
+  lazy: async () => ({
+    loader: () => replace('/dashboard')  // 自动重定向
+  })
+}
+```
+
+## 组件懒加载
+
+### Layout 和 Page 映射
+
+转换过程依赖预定义的组件映射:
+
+```ts
+// src/router/elegant/imports.ts
+export const layouts = {
+  Base: () => import('@/layouts/BaseLayout'),
+  Admin: () => import('@/layouts/AdminLayout')
+  // ...
+};
+
+export const pages = {
+  Dashboard: () => import('@/pages/Dashboard'),
+  UserList: () => import('@/pages/UserList'),
+  UserDetail: () => import('@/pages/UserDetail')
+  // ...
+};
+```
+
+### 动态导入
+
+转换后的路由使用 `lazy` 属性实现组件懒加载:
+
+```ts
+{
+  id: 'dashboard',
+  path: '/dashboard',
+  lazy: async () => {
+    const module = await pages['Dashboard']!();
+    return {
+      Component: module.default,
+      loader: module.loader,
+      action: module.action,
+      shouldRevalidate: module.shouldRevalidate
+    };
+  }
+}
+```
+
+## mergeValuesByParent - 按父级合并路由
+
+### 函数签名
+
+```ts
+export function mergeValuesByParent(
+  data: Router.SingleAuthRoute[]
+): Router.AuthRoute[]
+```
+
+### 功能说明
+
+将单个路由按父级分组合并,用于静态路由模式。
+
+### 类型定义
+
+```ts
+// 单个认证路由
+interface SingleAuthRoute {
+  parent: string | null;
+  parentPath?: string;
+  route: RouteObject;
+}
+
+// 合并后的认证路由
+interface AuthRoute {
+  parent: string | null;
+  parentPath?: string;
+  route: RouteObject[];
+}
+```
+
+### 使用示例
+
+```ts
+import { mergeValuesByParent } from '@/features/router/shared';
+
+// 输入: 单个路由数组
+const singleRoutes = [
+  { parent: 'base', route: { id: 'dashboard', path: '/dashboard' } },
+  { parent: 'base', route: { id: 'users', path: '/users' } },
+  { parent: 'admin', route: { id: 'settings', path: '/settings' } }
+];
+
+// 输出: 按父级分组的路由数组
+const mergedRoutes = mergeValuesByParent(singleRoutes);
+// [
+//   {
+//     parent: 'base',
+//     route: [
+//       { id: 'dashboard', path: '/dashboard' },
+//       { id: 'users', path: '/users' }
+//     ]
+//   },
+//   {
+//     parent: 'admin',
+//     route: [
+//       { id: 'settings', path: '/settings' }
+//     ]
+//   }
+// ]
+```
+
+### 应用场景
+
+在静态路由模式下,合并路由以便批量添加:
+
+```ts
+import { mergeValuesByParent } from '@/features/router/shared';
+
+async function initStaticRoutes(addRoutes: AddRoutesFn) {
+  // 获取所有静态路由
+  const singleRoutes = authRoutes;
+
+  // 按父级合并
+  const mergedRoutes = mergeValuesByParent(singleRoutes);
+
+  // 批量添加路由
+  mergedRoutes.forEach(({ parent, route }) => {
+    addRoutes(parent, route);
+  });
+}
+```
+
+## filterAuthRoutesByRoles - 按角色过滤路由
+
+### 函数签名
+
+```ts
+export function filterAuthRoutesByRoles(
+  routes: { parent: string | null; route: RouteObject[] }[],
+  roles: string[]
+): Array<{ parent: string | null; route: RouteObject[] }>
+```
+
+### 功能说明
+
+根据用户角色过滤路由,只保留用户有权限访问的路由。
+
+### 过滤规则
+
+1. **空角色列表**: 如果路由的 `handle.roles` 为空,表示无需权限,所有用户都可访问
+2. **角色匹配**: 如果用户角色包含在路由的 `handle.roles` 中,允许访问
+3. **Index 路由**: 特殊处理 index 路由的权限检查
+
+### 使用示例
+
+```ts
+import { filterAuthRoutesByRoles } from '@/features/router/shared';
+
+const routes = [
+  {
+    parent: 'base',
+    route: [
+      {
+        id: 'dashboard',
+        path: '/dashboard',
+        handle: { roles: [] }  // 无需权限
+      },
+      {
+        id: 'users',
+        path: '/users',
+        handle: { roles: ['admin'] }  // 需要 admin 角色
+      },
+      {
+        id: 'reports',
+        path: '/reports',
+        handle: { roles: ['admin', 'manager'] }  // 需要 admin 或 manager 角色
+      }
+    ]
+  }
+];
+
+// 用户角色: ['admin']
+const userRoles = ['admin'];
+const filteredRoutes = filterAuthRoutesByRoles(routes, userRoles);
+
+// 结果: 保留 dashboard、users、reports
+// dashboard: 无需权限
+// users: 用户有 admin 角色
+// reports: 用户有 admin 角色
+
+// 用户角色: ['user']
+const userRoles2 = ['user'];
+const filteredRoutes2 = filterAuthRoutesByRoles(routes, userRoles2);
+
+// 结果: 只保留 dashboard
+// dashboard: 无需权限
+// users: 用户没有 admin 角色 (过滤)
+// reports: 用户没有 admin 或 manager 角色 (过滤)
+```
+
+### 应用场景
+
+在静态路由模式下,根据用户角色过滤可访问的路由:
+
+```ts
+async function initAuthRoutes(addRoutes: AddRoutesFn) {
+  const userInfo = await getUserInfo();
+  const userRoles = userInfo.roles;
+
+  // 合并路由
+  const mergedRoutes = mergeValuesByParent(authRoutes);
+
+  // 根据角色过滤
+  const filteredRoutes = filterAuthRoutesByRoles(mergedRoutes, userRoles);
+
+  // 添加过滤后的路由
+  filteredRoutes.forEach(({ parent, route }) => {
+    addRoutes(parent, route);
+  });
+}
+```
+
+## 完整示例
+
+### 1. 后端路由定义
+
+```json
+{
+  "home": "/dashboard",
+  "routes": [
+    {
+      "name": "dashboard",
+      "path": "/dashboard",
+      "component": "page.Dashboard",
+      "handle": {
+        "title": "仪表板",
+        "icon": "mdi:view-dashboard",
+        "keepAlive": true,
+        "order": 1
+      }
+    },
+    {
+      "name": "system",
+      "path": "/system",
+      "layout": "layout.Base",
+      "handle": {
+        "title": "系统管理",
+        "icon": "mdi:cog"
+      },
+      "children": [
+        {
+          "name": "users",
+          "path": "users",
+          "component": "page.UserList",
+          "handle": {
+            "title": "用户管理",
+            "roles": ["admin"]
+          }
+        },
+        {
+          "name": "roles",
+          "path": "roles",
+          "component": "page.RoleList",
+          "handle": {
+            "title": "角色管理",
+            "roles": ["admin"]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 2. 转换处理
+
+```ts
+import { transformBackendRoutesToReactRoutes } from '@/features/router/shared';
+
+// 获取后端路由
+const backendResponse = await fetchBackendRoutes();
+
+// 转换为 React Router 格式
+const { cacheRoutes, routes } = transformBackendRoutesToReactRoutes(
+  backendResponse.routes
+);
+
+// 设置缓存路由
+store.dispatch(setCacheRoutes(cacheRoutes));
+
+// 添加路由到路由树
+routes.forEach(route => {
+  router.patchRoutes(null, [route]);
+});
+```
+
+## 错误处理
+
+### 1. 组件未找到
+
+```ts
+async function getConfig() {
+  if (isLayout && layoutKey && layouts[layoutKey]) {
+    const module = await layouts[layoutKey]!();
+    return { Component: module.default, isLayout: true };
+  }
+
+  if (isPage && componentKey && pages[componentKey]) {
+    const module = await pages[componentKey]!();
+    return { Component: module.default, isLayout: false };
+  }
+
+  // 组件未找到
+  console.error(`Component not found: ${componentKey || layoutKey}`);
+  return null;
+}
+```
+
+### 2. 导入失败
+
+```ts
+try {
+  const module = await pages[componentKey]!();
+  return { Component: module.default };
+} catch (error) {
+  console.error(`Failed to load component: ${componentKey}`, error);
+  // 返回错误组件
+  return {
+    Component: () => <div>组件加载失败</div>
+  };
+}
+```
+
+## 性能优化
+
+### 1. 路由预加载
+
+```ts
+// 预加载关键路由
+const criticalRoutes = ['Dashboard', 'UserList'];
+criticalRoutes.forEach(key => {
+  if (pages[key]) {
+    pages[key]();  // 触发导入
+  }
+});
+```
+
+### 2. 分块加载
+
+```ts
+// 按模块分组
+export const pages = {
+  // 核心模块 (优先加载)
+  Dashboard: () => import('@/pages/Dashboard'),
+
+  // 用户模块 (按需加载)
+  UserList: () => import('@/pages/users/List'),
+  UserDetail: () => import('@/pages/users/Detail'),
+
+  // 系统模块 (按需加载)
+  Settings: () => import('@/pages/system/Settings')
+};
+```
+
+## 相关文件
+
+- **shared.ts**: 路由转换工具 (`/src/features/router/shared.ts:1`)
+- **initRouter.ts**: 路由初始化 (`/src/features/router/initRouter.ts:1`)
+- **imports.ts**: 组件映射 (`/src/router/elegant/imports.ts`)
+
+## 总结
+
+后端路由转换模块提供了完整的路由转换功能:
+
+- 将后端路由格式转换为 React Router 格式
+- 自动识别布局和页面组件
+- 支持 index 路由自动生成
+- 自动收集需要缓存的路由
+- 支持重定向配置
+- 提供按父级合并和按角色过滤功能
+- 完善的错误处理和性能优化
+- 适用于动态路由模式的各种场景

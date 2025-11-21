@@ -6,21 +6,112 @@ title: 概述
 
 在学习和使用框架时，**路由**部分常常是十分关键的模块。虽然仔细阅读文档可能有些枯燥，但我仍然建议你认真研读关于路由的内容。路由作为框架的核心组件之一，起着至关重要的作用。深入理解路由机制，不仅能帮助你更高效地开发应用，还能让你在处理复杂场景时更加得心应手，提高代码的可维护性和灵活性。因此，花时间掌握这一部分知识是非常值得的投入。
 
-## 你需要关注以下几点
+## 核心特性
 
-1. **自动路由生成**
-   本框架使用 [Elegant Router](https://github.com/mufeng889/react-auto-route) 自动生成路由。
-   - 在项目中，你无需手动编写冗长的路由配置文件，只要**遵循特定的文件及文件夹命名规则**即可完成路由创建。
-   - 如果需要查看更详细的配置或支持更高级的用法（例如忽略某些文件夹、动态加载等），可以参阅 Elegant Router 的官方文档。
+### 1. 路由模式
 
-2. **路由鉴权**
-   - 路由鉴权采用**声明式的鉴权**方式，在根级的 `layout.tsx` 中统一进行处理。
-   - 当用户访问任意页面时，会先经过 `layout.tsx` 中的逻辑判断，从而决定**跳转**或**拦截**。
-   - 要查看具体的实现细节，请阅读项目中的 `src/pages/layout.tsx` 文件。你会发现系统会根据你的登录状态、用户角色等进行判断，从而决定跳转到目标页面或跳转至登录页/错误页。
+本框架支持两种路由模式：
 
-3. **两个关键 Hook**
-   - `useRoute`：可用于**获取当前路由的详细信息**。例如，你可以在页面组件中调用它来获取当前 URL 的路径参数、查询参数、路由数据（loader 返回值）、`layout` 中自定义的 `handle` 信息等。
-   - `useRouter`：则用于**路由跳转**与导航控制。通过它，你可以方便地执行前进、后退、替换路由、查询参数拼接等操作，简化对 `react-router` 原生 API 的重复调用。
+#### Hash 模式
+使用 URL hash (`#`) 来模拟完整的 URL，兼容性好，无需服务器端配置。
+
+```
+https://example.com/#/dashboard
+https://example.com/#/users?page=1
+```
+
+**优势**：
+- 兼容所有浏览器
+- 无需服务器配置
+- 适合纯前端应用
+
+#### History 模式
+使用 HTML5 History API，URL 更加简洁美观。
+
+```
+https://example.com/dashboard
+https://example.com/users?page=1
+```
+
+**优势**：
+- URL 简洁美观
+- SEO 友好
+- 可以使用 hash 锚点
+
+**配置方式**：
+```ts
+// src/config/index.ts
+export const globalConfig = {
+  routerMode: 'history', // 'hash' | 'history'
+  // ...
+};
+```
+
+### 2. 认证模式
+
+框架支持两种路由认证模式：
+
+#### 静态路由模式 (`VITE_AUTH_ROUTE_MODE=static`)
+- 路由配置直接定义在前端代码中
+- 根据用户角色在前端过滤可访问的路由
+- 适合路由结构固定的应用
+- 无需后端接口支持
+
+#### 动态路由模式 (`VITE_AUTH_ROUTE_MODE=dynamic`)
+- 路由配置从后端接口获取
+- 根据用户权限动态生成路由
+- 适合需要灵活配置路由的应用
+- 支持运行时动态调整路由结构
+
+### 3. 自动路由生成
+
+本框架使用 [Elegant Router](https://github.com/mufeng889/react-auto-route) 自动生成路由。
+
+- 在项目中，你无需手动编写冗长的路由配置文件，只要**遵循特定的文件及文件夹命名规则**即可完成路由创建
+- 支持页面级组件 (`index.tsx`)、布局级组件 (`layout.tsx`)、动态路由 (`[id].tsx`)、通配符路由 (`[...slug].tsx`) 等
+- 如果需要查看更详细的配置或支持更高级的用法（例如忽略某些文件夹、动态加载等），可以参阅 Elegant Router 的官方文档
+
+### 4. 路由鉴权
+
+- 路由鉴权采用**声明式的鉴权**方式，在根级的 `layout.tsx` 中统一进行处理
+- 当用户访问任意页面时，会先经过 `layout.tsx` 中的逻辑判断，从而决定**跳转**或**拦截**
+- 支持基于角色的权限控制 (RBAC)
+- 要查看具体的实现细节，请阅读项目中的 `src/pages/layout.tsx` 文件
+
+### 5. 核心 Hooks
+
+#### useRoute
+可用于**获取当前路由的详细信息**：
+- 路径参数 (params)
+- 查询参数 (query)
+- 路由数据 (loader 返回值)
+- 路由元信息 (handle)
+- 匹配的路由列表 (matched)
+- 错误信息 (error)
+
+#### useRouter
+用于**路由跳转**与导航控制：
+- 基础导航：`navigate`、`back`、`forward`、`go`
+- 扩展导航：`push`、`replace`、`goTo`、`goHome`
+- 信息获取：`getLocation`、`getPathname`、`getSearch` 等
+- 路由管理：`resetRoutes`
+
+### 6. 路由缓存
+
+基于 [keepalive-for-react](https://github.com/irychen/keepalive-for-react) 实现路由级别的页面缓存：
+- 支持通过 `handle.keepAlive` 配置是否缓存页面
+- 自动收集需要缓存的路由
+- 提供完整的缓存控制 API
+- 支持缓存刷新和清除
+
+### 7. 查询参数处理
+
+提供完整的查询参数处理工具：
+- `parseQuery`：解析 URL 查询字符串
+- `stringifyQuery`：序列化对象为查询字符串
+- 自动处理编码/解码
+- 支持数组参数
+- 与路由导航无缝集成
 
 ### 推荐的学习路径
 
@@ -35,6 +126,31 @@ title: 概述
 3. **了解 Hook 的使用**
    - 在任意页面中，通过 `useRoute` 获取当前路由的各种上下文信息，如错误状态、路由参数、查询参数等。
    - 通过 `useRouter` 获取导航方法，实现更灵活的页面跳转、替换、回退等功能。
+
+---
+
+## 文档导航
+
+### 基础概念
+- [路由创建](/routes/create) - 了解如何创建和组织路由
+- [路由元信息](/routes/handle) - 配置路由的标题、图标、权限等
+- [RouterProvider](/routes/router-provider) - 路由系统的入口组件
+
+### 核心功能
+- [路由初始化](/routes/init) - 静态和动态路由模式详解
+- [路由守卫](/routes/guard) - 权限控制和路由拦截
+- [路由缓存](/routes/cache) - 页面缓存配置和使用
+- [核心路由实例](/routes/core) - 路由实例的完整 API
+
+### 进阶特性
+- [查询参数处理](/routes/query) - URL 查询参数的解析和序列化
+- [路由状态管理](/routes/store) - 使用 Redux 管理路由状态
+- [后端路由转换](/routes/transform) - 动态路由的数据转换
+- [路由工具函数](/routes/utils) - 实用的路由处理工具
+
+### Hooks
+- [useRoute](/routes/use-route) - 获取当前路由信息
+- [useRouter](/routes/use-router) - 路由导航和控制
 
 ---
 

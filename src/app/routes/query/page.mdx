@@ -1,0 +1,452 @@
+---
+title: 查询参数处理
+---
+
+# 查询参数处理
+
+在路由跳转过程中,经常需要通过 URL 查询参数(Query String)传递数据。本框架提供了一套完整的查询参数解析和序列化工具函数,使得处理 URL 查询参数变得简单高效。
+
+## 概述
+
+查询参数处理模块提供了以下核心功能:
+
+- **parseQuery**: 将 URL 查询字符串解析为对象
+- **stringifyQuery**: 将对象序列化为 URL 查询字符串
+- **encode/decode**: 提供安全的编码和解码功能
+
+## 类型定义
+
+```ts
+// 单个查询参数值类型
+export type LocationQueryValue = string | null;
+
+// 查询参数对象类型
+export type LocationQuery = Record<string, LocationQueryValue | LocationQueryValue[]>;
+
+// 原始查询参数值类型(序列化前)
+export type LocationQueryValueRaw = LocationQueryValue | number | undefined;
+
+// 原始查询参数对象类型(序列化前)
+export type LocationQueryRaw = Record<string | number, LocationQueryValueRaw | LocationQueryValueRaw[]>;
+```
+
+## parseQuery - 解析查询字符串
+
+### 函数签名
+
+```ts
+export function parseQuery(search: string): LocationQuery
+```
+
+### 功能说明
+
+将 URL 查询字符串解析为键值对象,支持:
+
+- 自动处理前导 `?` 符号
+- 支持数组参数(同名参数会合并为数组)
+- 自动解码 URL 编码的字符
+- 处理空值参数
+
+### 使用示例
+
+```ts
+import { parseQuery } from '@/features/router/query';
+
+// 基础用法
+const query1 = parseQuery('?page=1&size=10');
+// 结果: { page: '1', size: '10' }
+
+// 无前导问号
+const query2 = parseQuery('name=John&age=25');
+// 结果: { name: 'John', age: '25' }
+
+// 数组参数(同名参数)
+const query3 = parseQuery('?tag=React&tag=TypeScript&tag=Vite');
+// 结果: { tag: ['React', 'TypeScript', 'Vite'] }
+
+// 空值参数
+const query4 = parseQuery('?filter=&sort=desc');
+// 结果: { filter: null, sort: 'desc' }
+
+// 包含特殊字符
+const query5 = parseQuery('?message=Hello%20World&emoji=%F0%9F%98%80');
+// 结果: { message: 'Hello World', emoji: '😀' }
+
+// 空字符串
+const query6 = parseQuery('');
+// 结果: {}
+```
+
+### 特殊处理
+
+#### 1. 加号转换为空格
+
+URL 中的 `+` 会被自动转换为空格:
+
+```ts
+parseQuery('?name=John+Doe');
+// 结果: { name: 'John Doe' }
+```
+
+#### 2. 数组参数合并
+
+同名参数会自动合并为数组:
+
+```ts
+parseQuery('?id=1&id=2&id=3');
+// 结果: { id: ['1', '2', '3'] }
+```
+
+#### 3. 无值参数
+
+没有等号的参数,值为 `null`:
+
+```ts
+parseQuery('?debug&verbose');
+// 结果: { debug: null, verbose: null }
+```
+
+## stringifyQuery - 序列化查询对象
+
+### 函数签名
+
+```ts
+export function stringifyQuery(query: LocationQueryRaw): string
+```
+
+### 功能说明
+
+将查询参数对象序列化为 URL 查询字符串,支持:
+
+- 自动编码特殊字符
+- 处理数组参数
+- 过滤 `undefined` 值
+- 处理 `null` 值(只输出键名,无等号)
+
+### 使用示例
+
+```ts
+import { stringifyQuery } from '@/features/router/query';
+
+// 基础用法
+const search1 = stringifyQuery({ page: 1, size: 10 });
+// 结果: 'page=1&size=10'
+
+// 数组参数
+const search2 = stringifyQuery({ tags: ['React', 'Vue', 'Angular'] });
+// 结果: 'tags=React&tags=Vue&tags=Angular'
+
+// 包含特殊字符
+const search3 = stringifyQuery({ message: 'Hello World', emoji: '😀' });
+// 结果: 'message=Hello+World&emoji=%F0%9F%98%80'
+
+// null 值(只输出键名)
+const search4 = stringifyQuery({ filter: null, sort: 'desc' });
+// 结果: 'filter&sort=desc'
+
+// undefined 值会被忽略
+const search5 = stringifyQuery({ page: 1, temp: undefined });
+// 结果: 'page=1'
+
+// 空对象
+const search6 = stringifyQuery({});
+// 结果: ''
+```
+
+### 特殊处理
+
+#### 1. 数组参数
+
+数组会被展开为多个同名参数:
+
+```ts
+stringifyQuery({ colors: ['red', 'green', 'blue'] });
+// 结果: 'colors=red&colors=green&colors=blue'
+```
+
+#### 2. null vs undefined
+
+- `null`: 输出键名,不输出等号和值
+- `undefined`: 完全忽略,不输出
+
+```ts
+stringifyQuery({ a: null, b: undefined, c: '' });
+// 结果: 'a&c='
+```
+
+#### 3. 空格编码
+
+空格会被编码为 `+` 而不是 `%20`:
+
+```ts
+stringifyQuery({ name: 'John Doe' });
+// 结果: 'name=John+Doe'
+```
+
+## encode/decode - 编解码工具
+
+### decode - 解码字符串
+
+```ts
+export function decode(text: string | number): string
+```
+
+安全地解码 URL 编码的字符串,如果解码失败会返回原始值并输出警告:
+
+```ts
+decode('Hello%20World');  // 'Hello World'
+decode('%E4%B8%AD%E6%96%87');  // '中文'
+decode('invalid%');  // 'invalid%' (解码失败,返回原值)
+```
+
+### encodeQueryKey - 编码查询参数键
+
+```ts
+export function encodeQueryKey(text: string | number): string
+```
+
+编码查询参数的键名,会对 `=` 符号进行特殊处理:
+
+```ts
+encodeQueryKey('user[name]');  // 'user[name]'
+encodeQueryKey('key=value');   // 'key%3Dvalue'
+```
+
+### encodeQueryValue - 编码查询参数值
+
+```ts
+export function encodeQueryValue(text: string | number): string
+```
+
+编码查询参数的值,处理各种特殊字符:
+
+```ts
+encodeQueryValue('Hello World');  // 'Hello+World'
+encodeQueryValue('a&b=c');        // 'a%26b%3Dc'
+encodeQueryValue('emoji 😀');     // 'emoji+%F0%9F%98%80'
+```
+
+## 在路由中使用
+
+### 1. 在 useRoute 中获取查询参数
+
+```tsx
+import { useRoute } from '@/features/router';
+
+function MyComponent() {
+  const route = useRoute<any, { page: string; size: string }>();
+
+  console.log(route.query.page);  // '1'
+  console.log(route.query.size);  // '10'
+
+  return <div>Page: {route.query.page}</div>;
+}
+```
+
+### 2. 在 useRouter 中使用查询参数
+
+```tsx
+import { useRouter } from '@/features/router';
+
+function MyComponent() {
+  const router = useRouter();
+
+  // 方法1: 使用 push 方法的 query 选项
+  const handleNavigate = () => {
+    router.push('/users', {
+      query: { page: 1, size: 10, tags: ['React', 'TypeScript'] }
+    });
+    // 跳转到: /users?page=1&size=10&tags=React&tags=TypeScript
+  };
+
+  // 方法2: 手动拼接查询字符串
+  const handleNavigate2 = () => {
+    router.push('/users?page=1&size=10');
+  };
+
+  return (
+    <div>
+      <button onClick={handleNavigate}>Navigate with query</button>
+    </div>
+  );
+}
+```
+
+### 3. 使用 goTo 方法
+
+```tsx
+const router = useRouter();
+
+// 带查询参数跳转
+router.goTo('/products', {
+  query: {
+    category: 'electronics',
+    sort: 'price',
+    order: 'asc'
+  }
+});
+// 跳转到: /products?category=electronics&sort=price&order=asc
+```
+
+## 实际应用场景
+
+### 1. 分页参数
+
+```tsx
+function ProductList() {
+  const route = useRoute<any, { page: string; size: string }>();
+  const router = useRouter();
+
+  const currentPage = parseInt(route.query.page || '1');
+  const pageSize = parseInt(route.query.size || '10');
+
+  const handlePageChange = (newPage: number) => {
+    router.push('/products', {
+      query: { page: newPage, size: pageSize }
+    });
+  };
+
+  return (
+    <div>
+      <ProductGrid page={currentPage} size={pageSize} />
+      <Pagination current={currentPage} onChange={handlePageChange} />
+    </div>
+  );
+}
+```
+
+### 2. 搜索过滤
+
+```tsx
+function SearchPage() {
+  const route = useRoute<any, { q: string; category: string; tags: string[] }>();
+  const router = useRouter();
+
+  const handleSearch = (keyword: string, filters: any) => {
+    router.push('/search', {
+      query: {
+        q: keyword,
+        category: filters.category,
+        tags: filters.tags,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice
+      }
+    });
+  };
+
+  return (
+    <div>
+      <SearchInput onSearch={handleSearch} />
+      <SearchResults query={route.query.q} filters={route.query} />
+    </div>
+  );
+}
+```
+
+### 3. Tab 切换
+
+```tsx
+function DashboardPage() {
+  const route = useRoute<any, { tab: string }>();
+  const router = useRouter();
+
+  const activeTab = route.query.tab || 'overview';
+
+  const handleTabChange = (newTab: string) => {
+    router.replace('/dashboard', {
+      query: { tab: newTab }
+    });
+  };
+
+  return (
+    <div>
+      <Tabs value={activeTab} onChange={handleTabChange}>
+        <Tab value="overview">概览</Tab>
+        <Tab value="analytics">分析</Tab>
+        <Tab value="reports">报表</Tab>
+      </Tabs>
+    </div>
+  );
+}
+```
+
+## 编码规则
+
+### 保留字符
+
+以下字符在查询参数中会被编码:
+
+| 字符 | 编码后 | 说明 |
+|------|--------|------|
+| 空格 | `+` 或 `%20` | 优先使用 `+` |
+| `=` | `%3D` | 等号 |
+| `&` | `%26` | 与号 |
+| `#` | `%23` | 井号 |
+| `` ` `` | `%60` | 反引号 |
+| `{` | `%7B` | 左花括号 |
+| `}` | `%7D` | 右花括号 |
+| `^` | `%5E` | 脱字符 |
+| `|` | `%7C` | 竖线 |
+
+### 不编码字符
+
+以下字符保持原样,不进行编码:
+
+- 字母: `a-z` `A-Z`
+- 数字: `0-9`
+- 特殊符号: `-` `_` `.` `~`
+- 方括号: `[` `]` (用于数组参数)
+
+## 性能优化建议
+
+### 1. 避免频繁序列化
+
+如果需要多次使用相同的查询参数,可以缓存序列化结果:
+
+```tsx
+const queryString = useMemo(() => {
+  return stringifyQuery({ page, size, filters });
+}, [page, size, filters]);
+```
+
+### 2. 合理使用 replace
+
+如果只是更新查询参数,使用 `replace` 而不是 `push` 可以避免产生过多的历史记录:
+
+```tsx
+// 推荐: 使用 replace
+router.replace('/list', { query: { page: 2 } });
+
+// 不推荐: 使用 push (会产生历史记录)
+router.push('/list', { query: { page: 2 } });
+```
+
+## 注意事项
+
+1. **数据类型**: 查询参数的值始终是字符串类型,需要时记得转换:
+   ```ts
+   const page = parseInt(route.query.page || '1');
+   const enabled = route.query.enabled === 'true';
+   ```
+
+2. **特殊字符**: 包含特殊字符的值会被自动编码,不需要手动处理
+
+3. **数组参数**: 数组参数会展开为多个同名参数,而不是 JSON 字符串
+
+4. **undefined vs null**: `undefined` 会被忽略,`null` 会输出键名
+
+## 相关文件
+
+- **query.ts**: 查询参数处理工具 (`/src/features/router/query.ts:1`)
+- **useRoute.ts**: 获取路由信息的 Hook (`/src/features/router/useRoute.ts:1`)
+- **router.ts**: 核心路由实例 (`/src/features/router/router.ts:1`)
+
+## 总结
+
+查询参数处理模块提供了完整的解析和序列化功能,使得处理 URL 查询参数变得简单可靠:
+
+- `parseQuery` 将查询字符串解析为对象
+- `stringifyQuery` 将对象序列化为查询字符串
+- 自动处理编码/解码、数组参数等复杂情况
+- 与 `useRoute` 和 `useRouter` 无缝集成
+- 支持各种实际应用场景

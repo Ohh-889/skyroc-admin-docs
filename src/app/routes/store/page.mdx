@@ -1,0 +1,467 @@
+---
+title: 路由状态管理
+---
+
+# 路由状态管理
+
+路由状态管理模块基于 Redux Toolkit,用于管理与路由相关的全局状态,包括缓存路由、首页路径等信息。
+
+## 概述
+
+`routeStore` 是一个 Redux slice,它管理以下路由状态:
+
+- **cacheRoutes**: 需要缓存的路由路径列表
+- **removeCacheKey**: 需要从缓存中移除的路由标识
+- **routeHomePath**: 应用的首页路径
+
+## 状态定义
+
+```ts
+interface InitialStateType {
+  /** 需要进行缓存的页面路径列表 */
+  cacheRoutes: string[];
+  /** 需要删除的缓存页面标识 */
+  removeCacheKey: string[] | string | null;
+  /** 首页路由路径 */
+  routeHomePath: string;
+}
+```
+
+### 初始状态
+
+```ts
+const initialState: InitialStateType = {
+  cacheRoutes: [],
+  removeCacheKey: null,
+  routeHomePath: import.meta.env.VITE_ROUTE_HOME
+};
+```
+
+## Actions (操作)
+
+### setCacheRoutes
+
+设置需要缓存的路由列表,会完全替换现有的缓存路由列表。
+
+```ts
+import { setCacheRoutes } from '@/features/router/routeStore';
+import { useAppDispatch } from '@/store';
+
+function MyComponent() {
+  const dispatch = useAppDispatch();
+
+  const handleSetCache = () => {
+    // 设置缓存路由
+    dispatch(setCacheRoutes(['/dashboard', '/users', '/products']));
+  };
+}
+```
+
+### addCacheRoutes
+
+向缓存路由列表中添加单个路由路径。
+
+```ts
+import { addCacheRoutes } from '@/features/router/routeStore';
+import { useAppDispatch } from '@/store';
+
+function MyComponent() {
+  const dispatch = useAppDispatch();
+
+  const handleAddCache = () => {
+    // 添加单个缓存路由
+    dispatch(addCacheRoutes('/settings'));
+  };
+}
+```
+
+### setRemoveCacheKey
+
+设置需要从缓存中移除的路由标识,可以是单个字符串、字符串数组或 null。
+
+```ts
+import { setRemoveCacheKey } from '@/features/router/routeStore';
+import { useAppDispatch } from '@/store';
+
+function MyComponent() {
+  const dispatch = useAppDispatch();
+
+  // 移除单个缓存
+  const handleRemoveSingle = () => {
+    dispatch(setRemoveCacheKey('/dashboard'));
+  };
+
+  // 移除多个缓存
+  const handleRemoveMultiple = () => {
+    dispatch(setRemoveCacheKey(['/dashboard', '/users']));
+  };
+
+  // 清除移除标记
+  const handleClearRemove = () => {
+    dispatch(setRemoveCacheKey(null));
+  };
+}
+```
+
+### setHomePath
+
+设置应用的首页路径,通常在动态路由模式下,根据后端返回的数据设置。
+
+```ts
+import { setHomePath } from '@/features/router/routeStore';
+import { useAppDispatch } from '@/store';
+
+function MyComponent() {
+  const dispatch = useAppDispatch();
+
+  const handleSetHome = () => {
+    // 设置首页路径
+    dispatch(setHomePath('/workspace'));
+  };
+}
+```
+
+### resetRouteStore
+
+重置路由状态到初始值。
+
+```ts
+import { resetRouteStore } from '@/features/router/routeStore';
+import { useAppDispatch } from '@/store';
+
+function MyComponent() {
+  const dispatch = useAppDispatch();
+
+  const handleReset = () => {
+    // 重置路由状态
+    dispatch(resetRouteStore());
+  };
+}
+```
+
+## Selectors (选择器)
+
+### selectCacheRoutes
+
+获取当前缓存的路由路径列表。
+
+```ts
+import { selectCacheRoutes } from '@/features/router/routeStore';
+import { useAppSelector } from '@/store';
+
+function MyComponent() {
+  const cacheRoutes = useAppSelector(selectCacheRoutes);
+
+  console.log('缓存路由:', cacheRoutes);
+  // 输出: ['/dashboard', '/users', '/products']
+
+  return (
+    <div>
+      <h3>已缓存的路由:</h3>
+      <ul>
+        {cacheRoutes.map(route => (
+          <li key={route}>{route}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+### selectRemoveCacheKey
+
+获取需要移除的缓存路由标识。
+
+```ts
+import { selectRemoveCacheKey } from '@/features/router/routeStore';
+import { useAppSelector } from '@/store';
+
+function MyComponent() {
+  const removeCacheKey = useAppSelector(selectRemoveCacheKey);
+
+  useEffect(() => {
+    if (removeCacheKey) {
+      console.log('需要移除的缓存:', removeCacheKey);
+      // 执行移除缓存的逻辑...
+    }
+  }, [removeCacheKey]);
+}
+```
+
+### selectRouteHomePath
+
+获取首页路径。
+
+```ts
+import { selectRouteHomePath } from '@/features/router/routeStore';
+import { useAppSelector } from '@/store';
+
+function MyComponent() {
+  const homePath = useAppSelector(selectRouteHomePath);
+
+  console.log('首页路径:', homePath);
+  // 输出: '/dashboard'
+
+  const handleGoHome = () => {
+    router.push(homePath);
+  };
+
+  return (
+    <button onClick={handleGoHome}>返回首页</button>
+  );
+}
+```
+
+## 使用场景
+
+### 1. 路由缓存管理
+
+在动态路由初始化时,根据路由配置设置需要缓存的路由:
+
+```ts
+// 在 initAuthRoutes 中
+import { setCacheRoutes } from '@/features/router/routeStore';
+import { store } from '@/store';
+
+export async function initAuthRoutes() {
+  // ... 其他逻辑
+
+  // 转换后端路由,获取需要缓存的路由
+  const { cacheRoutes, routes } = transformBackendRoutesToReactRoutes(data.routes);
+
+  // 设置缓存路由
+  if (cacheRoutes.length > 0) {
+    store.dispatch(setCacheRoutes(cacheRoutes));
+  }
+}
+```
+
+### 2. 组件级缓存控制
+
+在组件中动态添加或移除缓存:
+
+```tsx
+import { addCacheRoutes, setRemoveCacheKey } from '@/features/router/routeStore';
+import { useAppDispatch } from '@/store';
+
+function SettingsPage() {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    // 进入页面时添加到缓存
+    dispatch(addCacheRoutes('/settings'));
+
+    return () => {
+      // 离开页面时从缓存移除
+      dispatch(setRemoveCacheKey('/settings'));
+    };
+  }, [dispatch]);
+
+  return <div>设置页面</div>;
+}
+```
+
+### 3. Tab 页缓存管理
+
+在多标签页系统中管理页面缓存:
+
+```tsx
+import { selectCacheRoutes, setRemoveCacheKey } from '@/features/router/routeStore';
+import { useAppDispatch, useAppSelector } from '@/store';
+
+function TabBar() {
+  const dispatch = useAppDispatch();
+  const cacheRoutes = useAppSelector(selectCacheRoutes);
+  const [tabs, setTabs] = useState<Tab[]>([]);
+
+  const handleCloseTab = (path: string) => {
+    // 关闭标签页时,从缓存中移除
+    if (cacheRoutes.includes(path)) {
+      dispatch(setRemoveCacheKey(path));
+    }
+
+    // 更新标签页列表
+    setTabs(prev => prev.filter(tab => tab.path !== path));
+  };
+
+  const handleCloseOtherTabs = (currentPath: string) => {
+    // 关闭其他标签页时,批量移除缓存
+    const pathsToRemove = cacheRoutes.filter(path => path !== currentPath);
+    dispatch(setRemoveCacheKey(pathsToRemove));
+
+    // 更新标签页列表
+    setTabs(prev => prev.filter(tab => tab.path === currentPath));
+  };
+
+  return (
+    <div className="tab-bar">
+      {tabs.map(tab => (
+        <div key={tab.path} className="tab">
+          <span>{tab.title}</span>
+          <button onClick={() => handleCloseTab(tab.path)}>×</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### 4. 动态首页设置
+
+在登录后根据用户角色设置不同的首页:
+
+```ts
+import { setHomePath } from '@/features/router/routeStore';
+import { store } from '@/store';
+
+async function handleLogin(credentials: LoginCredentials) {
+  const response = await loginAPI(credentials);
+
+  // 根据用户角色设置首页
+  if (response.user.role === 'admin') {
+    store.dispatch(setHomePath('/admin/dashboard'));
+  } else if (response.user.role === 'user') {
+    store.dispatch(setHomePath('/user/home'));
+  } else {
+    store.dispatch(setHomePath('/dashboard'));
+  }
+
+  // 跳转到首页
+  const homePath = selectRouteHomePath(store.getState());
+  router.push(homePath);
+}
+```
+
+## 与 KeepAlive 集成
+
+路由状态管理与 `keepalive-for-react` 库集成,实现路由级别的页面缓存:
+
+```tsx
+import { useAppSelector } from '@/store';
+import { selectCacheRoutes, selectRemoveCacheKey } from '@/features/router/routeStore';
+import { KeepAlive } from 'keepalive-for-react';
+
+function App() {
+  const cacheRoutes = useAppSelector(selectCacheRoutes);
+  const removeCacheKey = useAppSelector(selectRemoveCacheKey);
+  const aliveRef = useRef<KeepAliveRef>();
+
+  useEffect(() => {
+    if (removeCacheKey && aliveRef.current) {
+      // 根据 removeCacheKey 移除缓存
+      if (Array.isArray(removeCacheKey)) {
+        removeCacheKey.forEach(key => {
+          aliveRef.current?.removeCache(key);
+        });
+      } else {
+        aliveRef.current?.removeCache(removeCacheKey);
+      }
+    }
+  }, [removeCacheKey]);
+
+  return (
+    <KeepAlive
+      aliveRef={aliveRef}
+      activeName={location.pathname}
+      include={cacheRoutes}
+      max={10}
+    >
+      <Outlet />
+    </KeepAlive>
+  );
+}
+```
+
+## 最佳实践
+
+### 1. 合理设置缓存数量
+
+避免缓存过多页面导致内存占用过大:
+
+```ts
+// 设置合理的缓存上限
+const MAX_CACHE_COUNT = 10;
+
+const handleAddCache = (path: string) => {
+  const currentCacheRoutes = selectCacheRoutes(store.getState());
+
+  if (currentCacheRoutes.length >= MAX_CACHE_COUNT) {
+    // 移除最早的缓存
+    const updatedCacheRoutes = [...currentCacheRoutes.slice(1), path];
+    store.dispatch(setCacheRoutes(updatedCacheRoutes));
+  } else {
+    store.dispatch(addCacheRoutes(path));
+  }
+};
+```
+
+### 2. 及时清理缓存
+
+在用户退出登录时,清理所有缓存:
+
+```ts
+import { resetRouteStore } from '@/features/router/routeStore';
+
+async function handleLogout() {
+  // 清理路由状态
+  store.dispatch(resetRouteStore());
+
+  // 清理其他状态...
+
+  // 跳转到登录页
+  router.push('/login');
+}
+```
+
+### 3. 监听缓存变化
+
+在开发环境下监听缓存变化,便于调试:
+
+```ts
+import { selectCacheRoutes } from '@/features/router/routeStore';
+import { useAppSelector } from '@/store';
+
+function DevTools() {
+  const cacheRoutes = useAppSelector(selectCacheRoutes);
+
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('缓存路由已更新:', cacheRoutes);
+    }
+  }, [cacheRoutes]);
+
+  return null;
+}
+```
+
+## 类型定义
+
+```ts
+// Actions 类型
+export type SetCacheRoutesAction = PayloadAction<string[]>;
+export type AddCacheRoutesAction = PayloadAction<string>;
+export type SetRemoveCacheKeyAction = PayloadAction<string[] | string | null>;
+export type SetHomePathAction = PayloadAction<string>;
+
+// Selectors 返回类型
+export type CacheRoutesSelector = (state: RootState) => string[];
+export type RemoveCacheKeySelector = (state: RootState) => string[] | string | null;
+export type RouteHomePathSelector = (state: RootState) => string;
+```
+
+## 相关文件
+
+- **routeStore.ts**: 路由状态管理 (`/src/features/router/routeStore.ts:1`)
+- **initRouter.ts**: 路由初始化逻辑 (`/src/features/router/initRouter.ts:1`)
+- **cache/page.mdx**: 路由缓存文档
+
+## 总结
+
+路由状态管理模块提供了完整的路由状态管理功能:
+
+- 使用 Redux Toolkit 管理路由状态
+- 支持动态添加和移除缓存路由
+- 与 KeepAlive 集成实现页面缓存
+- 支持动态设置首页路径
+- 提供便捷的选择器访问路由状态
+- 适用于多标签页、动态路由等复杂场景

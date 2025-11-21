@@ -1,0 +1,140 @@
+---
+title: RouterProvider
+---
+
+# RouterProvider
+
+`RouterProvider` 是应用路由系统的核心入口组件,它负责初始化和提供路由上下文,使得整个应用的路由功能得以正常运行。
+
+## 概述
+
+`RouterProvider` 组件基于 React Router DOM 的 `RouterProvider`,并通过 React Context 向整个应用提供自定义路由实例。这使得应用中的任何组件都可以通过 `useRouter` Hook 访问路由功能。
+
+## 组件实现
+
+```tsx
+import { RouterProvider as Provider } from 'react-router-dom';
+import { router } from './router';
+import { RouterContext } from './router-context';
+
+export const RouterProvider = () => {
+  return (
+    <RouterContext.Provider value={router}>
+      <Provider router={router.reactRouter} />
+    </RouterContext.Provider>
+  );
+};
+```
+
+## 工作原理
+
+1. **路由实例初始化**
+   - `RouterProvider` 使用预先创建好的 `router` 实例
+   - `router` 实例包含了 React Router 实例和自定义的导航方法
+
+2. **上下文提供**
+   - 通过 `RouterContext.Provider` 将路由实例传递给整个应用
+   - 子组件可以通过 `useRouter` Hook 访问路由实例
+
+3. **React Router 集成**
+   - 使用 React Router DOM 的原生 `RouterProvider` 组件
+   - 传入 `router.reactRouter` 作为路由配置
+
+## 使用方式
+
+### 在应用入口使用
+
+通常在应用的根组件中使用 `RouterProvider`:
+
+```tsx
+import { RouterProvider } from '@/features/router';
+
+function App() {
+  return (
+    <RouterProvider />
+  );
+}
+
+export default App;
+```
+
+### 在组件中访问路由
+
+在应用的任何组件中,都可以通过 `useRouter` Hook 访问路由功能:
+
+```tsx
+import { useRouter } from '@/features/router';
+
+function MyComponent() {
+  const { push, back, goHome } = useRouter();
+
+  return (
+    <div>
+      <button onClick={() => push('/dashboard')}>跳转到首页</button>
+      <button onClick={back}>返回上一页</button>
+      <button onClick={goHome}>回到首页</button>
+    </div>
+  );
+}
+```
+
+## 相关组件
+
+- **RouterContext**: 路由上下文,用于在组件树中传递路由实例
+- **router**: 核心路由实例,包含所有导航方法和配置
+- **useRouter**: 自定义 Hook,用于在组件中访问路由功能
+
+## 注意事项
+
+1. `RouterProvider` 应该只在应用根组件中使用一次
+2. 确保 `RouterProvider` 包裹了所有需要使用路由功能的组件
+3. 不要在 `RouterProvider` 外部使用 `useRouter` Hook,否则会报错
+
+## 类型定义
+
+```ts
+// RouterContext 的类型
+export type RouterContextType = {
+  reactRouter: Router;
+  navigate: (path: To | null, options?: RouterNavigateOptions) => Promise<void>;
+  back: () => void;
+  forward: () => void;
+  go: (delta: number) => void;
+  goHome: (options?: RouterNavigateOptions) => void;
+  push: (path: To, options?: ExtendedNavigateOptions) => void;
+  replace: (path: To, options?: ExtendedNavigateOptions) => void;
+  reload: () => void;
+  navigateUp: () => void;
+  goTo: (path: To, options?: ExtendedNavigateOptions) => void;
+  getLocation: () => Location;
+  getPathname: () => string;
+  getSearch: () => string;
+  getHash: () => string;
+  getState: () => any;
+  canGoBack: () => boolean;
+  resetRoutes: () => void;
+};
+```
+
+## 示例
+
+### 完整的应用入口示例
+
+```tsx
+// src/main.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { Provider } from 'react-redux';
+import { RouterProvider } from '@/features/router';
+import { store } from '@/store';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <RouterProvider />
+    </Provider>
+  </React.StrictMode>
+);
+```
+
+通过使用 `RouterProvider`,你的应用就拥有了完整的路由功能,包括页面跳转、历史记录管理、路由守卫等特性。
