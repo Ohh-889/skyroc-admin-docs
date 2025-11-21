@@ -54,3 +54,15 @@ export const techStack = [
   'TypeScript',
   '响应式设计'
 ];
+
+// 项目配置信息
+export const projectConfig = {
+  cloneUrl: 'https://github.com/Ohh-889/skyroc-admin.git',
+  docs: 'https://admin-docs.skyroc.me',
+  forks: '126',
+  github: 'https://github.com/Ohh-889/skyroc-admin',
+  name: 'SkyrocAdmin',
+  preview: 'https://skyroc-admin.com/',
+  stars: '618',
+  version: 'v2.4.0'
+};

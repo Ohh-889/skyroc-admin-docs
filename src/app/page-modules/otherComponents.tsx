@@ -55,9 +55,9 @@ export const ScreenshotDisplay = () => {
       }}
     >
       <img
-        alt="Soybean Admin Dashboard"
+        alt="Skyroc Admin Dashboard"
         className="w-full h-auto rounded-lg"
-        src="https://soybeanjs-1300612522.cos.ap-guangzhou.myqcloud.com/uPic/soybean-admin-v1-01.png"
+        src="https://camo.githubusercontent.com/1fedd722f7eef3913562538c302d17655b4668438d02f0ac81b94c942bf532de/68747470733a2f2f736f796265616e6a732d313330303631323532322e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f755069632f736f796265616e2d61646d696e2d76312d30322e706e67"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
     </motion.div>
