@@ -1,0 +1,164 @@
+---
+title: 权限控制
+---
+
+## 概述
+
+SkyrocAdmin 实现了基于 RBAC (Role-Based Access Control) 的权限控制系统，支持路由级和按钮级的精细化权限管理。
+
+## 权限层级
+
+### 1. 路由权限
+
+通过路由元信息 `handle.roles` 控制页面访问权限：
+
+```typescript
+{
+  path: '/user-management',
+  handle: {
+    title: '用户管理',
+    roles: ['admin', 'manager']  // 只有这些角色可访问
+  }
+}
+```
+
+- 未配置 `roles` 的路由，所有已登录用户都可访问
+- 配置 `constant: true` 的路由为常量路由，无需权限验证
+
+**代码位置**: `src/features/router/routes.ts`
+
+### 2. 按钮权限
+
+通过权限码 (button code) 控制按钮显示：
+
+```tsx
+import { useAuth } from '@/features/auth';
+
+const { hasAuth } = useAuth();
+
+// 单个权限码
+{hasAuth('user:create') && <Button>新建</Button>}
+
+// 多个权限码（满足其一即可）
+{hasAuth(['user:edit', 'user:update']) && <Button>编辑</Button>}
+```
+
+**代码位置**: `src/features/auth/auth.ts`
+
+## 权限验证 Hook
+
+### useAuth
+
+提供权限检查和用户信息获取：
+
+```typescript
+const {
+  hasAuth,          // 权限验证函数
+  isStaticSuper     // 是否为超级管理员（仅静态模式）
+} = useAuth();
+```
+
+**权限验证逻辑**：
+- 静态模式：检查用户的 `buttons` 数组是否包含权限码
+- 动态模式：由后端返回的路由配置控制
+
+## 认证模式
+
+### 静态模式 (static)
+
+- 前端定义所有路由
+- 根据用户角色过滤路由
+- 支持超级管理员角色 (VITE_STATIC_SUPER_ROLE)
+- 适合权限结构固定的项目
+
+### 动态模式 (dynamic)
+
+- 后端返回用户可访问的路由
+- 更灵活的权限配置
+- 支持运行时修改权限
+- 需要后端配合实现
+
+**配置**: `.env` 中的 `VITE_AUTH_ROUTE_MODE`
+
+## 权限数据结构
+
+### 用户信息
+
+```typescript
+interface UserInfo {
+  userId: string;
+  userName: string;
+  roles: string[];       // 角色列表
+  buttons: string[];     // 按钮权限码列表
+}
+```
+
+### 路由权限
+
+```typescript
+interface RouteHandle {
+  title: string;
+  roles?: string[];      // 允许访问的角色
+  constant?: boolean;    // 是否为常量路由（无需验证）
+}
+```
+
+## 使用场景
+
+### 页面权限控制
+
+在路由配置中添加 `roles`：
+
+```typescript
+{
+  path: '/system',
+  handle: {
+    title: '系统管理',
+    roles: ['admin']
+  }
+}
+```
+
+### 操作按钮控制
+
+```tsx
+function UserList() {
+  const { hasAuth } = useAuth();
+
+  return (
+    <>
+      {hasAuth('user:create') && <Button>新建</Button>}
+      {hasAuth('user:edit') && <Button>编辑</Button>}
+      {hasAuth('user:delete') && <Button>删除</Button>}
+    </>
+  );
+}
+```
+
+### 条件渲染
+
+```tsx
+function Dashboard() {
+  const { hasAuth, isStaticSuper } = useAuth();
+
+  return (
+    <div>
+      {isStaticSuper && <AdminPanel />}
+      {hasAuth('report:view') && <ReportSection />}
+    </div>
+  );
+}
+```
+
+## 最佳实践
+
+1. **前后端双重验证** - 前端权限控制仅作为 UI 优化，后端必须进行权限验证
+2. **权限码命名规范** - 使用 `资源:操作` 格式，如 `user:create`、`order:delete`
+3. **角色设计** - 合理划分角色，避免角色过多导致管理复杂
+4. **权限粒度** - 根据业务需求选择合适的权限粒度，不宜过细或过粗
+
+## 相关文档
+
+- [认证系统](/auth) - 完整的认证流程
+- [路由守卫](/routes/guard) - 路由级权限保护
+- [菜单管理](/auth/menu) - 基于权限的菜单显示

@@ -1,0 +1,108 @@
+---
+title: 服务层架构
+---
+
+## 概述
+
+SkyrocAdmin 采用清晰的分层架构，将 API 请求、错误处理、状态管理等职责明确分离。
+
+## 架构分层
+
+### 1. API 层 (service/api)
+
+定义所有后端 API 接口函数，按业务模块划分：
+
+- `auth.ts` - 认证相关（登录、获取用户信息、Token 刷新）
+- `route.ts` - 路由相关（获取常量路由、后端路由）
+- `system-manage.ts` - 系统管理（用户、角色、菜单管理）
+
+**代码位置**: `src/service/api/`
+
+### 2. 请求层 (service/request)
+
+HTTP 请求实例创建和拦截器配置：
+
+- `index.ts` - 请求实例创建
+- `shared.ts` - Token 附加、请求签名
+- `error.ts` - 错误处理逻辑
+
+**代码位置**: `src/service/request/`
+
+### 3. Hooks 层 (service/hooks)
+
+使用 TanStack Query 封装的业务 hooks：
+
+- `useAuth.ts` - 登录、获取用户信息等
+- `useRoute.ts` - 获取路由数据
+- `useSystemManage.ts` - 系统管理 CRUD 操作
+
+**代码位置**: `src/service/hooks/`
+
+## 请求生命周期
+
+```
+发起请求
+  → 附加 Token (请求拦截器)
+  → 发送到服务端
+  → 响应拦截器
+    → 成功码判断
+      → 成功 → 返回数据
+      → Token 过期 → 刷新 Token → 重试请求
+      → 登出码 → 清除认证 → 跳转登录页
+      → 其他错误 → 显示错误提示
+```
+
+## Token 刷新机制
+
+当接口返回 Token 过期错误码时：
+
+1. 暂停当前请求
+2. 调用刷新 Token 接口
+3. 更新本地 Token
+4. 重试原请求
+5. 如果刷新失败，则跳转登录页
+
+**代码位置**: `src/service/request/shared.ts` 中的 `handleRefreshToken`
+
+## 错误处理策略
+
+- **Token 过期码** - 自动刷新 Token 并重试
+- **登出码** - 直接跳转登录页
+- **模态登出码** - 弹窗确认后登出
+- **其他错误** - 使用 Ant Design Message 显示错误信息
+
+**代码位置**: `src/service/request/error.ts`
+
+## TanStack Query 配置
+
+```typescript
+{
+  gcTime: 10 * 60 * 1000,        // 缓存保留 10 分钟
+  staleTime: 30 * 1000,           // 30 秒内数据为新鲜
+  refetchOnMount: true,           // 组件挂载时重新获取
+  refetchOnReconnect: true,       // 网络重连时重新获取
+  refetchOnWindowFocus: false,    // 窗口聚焦时不重新获取
+  retry: 2                        // 失败重试 2 次
+}
+```
+
+**代码位置**: `src/service/queryClient.ts`
+
+## 使用示例
+
+### API 函数
+
+```typescript
+// src/service/api/auth.ts
+export function fetchLogin(params: Api.Auth.LoginParams) {
+  return request.post<Api.Auth.LoginToken>('/auth/login', params);
+}
+```
+
+### Hooks
+
+```typescript
+// 在组件中使用
+const { mutateAsync: login } = useLogin();
+const { data: userInfo } = useUserInfo();
+```

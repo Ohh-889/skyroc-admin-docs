@@ -13,13 +13,19 @@ const ICON_ITEMS: MetaRecord = {
 const THEME_ITEMS: MetaRecord = {
   // eslint-disable-next-line sort/object-properties
   index: '概述',
-  config: '配置'
+  config: '配置',
+  tokens: '主题 Tokens',
+  ui: 'UI 主题',
+  unocss: 'UnoCSS 主题',
+  logo: 'Logo',
+  loading: '加载'
 };
 
 const REQUEST_ITEMS: MetaRecord = {
   // eslint-disable-next-line sort/object-properties
   index: '概述',
   usage: '使用',
+  service: '服务层架构',
   backend: '对接后端',
   proxy: '代理',
   'use-request': {
@@ -73,8 +79,9 @@ const PERSONAL_INSIGHTS_ITEMS: MetaRecord = {
 const AUTH_ITEMS: MetaRecord = {
   // eslint-disable-next-line sort/object-properties
   index: '概述',
+  control: '权限控制',
   menu: '菜单管理',
-  tabs: '权限管理'
+  tabs: '标签页管理'
 };
 
 export default {
@@ -99,6 +106,12 @@ export default {
         items: ICON_ITEMS,
         title: '系统图标'
       },
+      layout: '布局系统',
+      store: '状态管理',
+      form: '表单工具',
+      table: '表格组件',
+      components: '通用组件',
+      animate: '动画系统',
       error: '错误边界',
       i18n: '国际化',
       redux: 'Redux 与 Redux Toolkit',
@@ -106,6 +119,9 @@ export default {
         items: CLI_ITEMS,
         title: '命令行'
       },
+      config: '项目配置',
+      packages: 'Monorepo 工具包',
+      deploy: '构建与部署',
       __: {
         title: '更多',
         type: 'separator'

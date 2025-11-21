@@ -1,0 +1,144 @@
+---
+title: 状态管理
+---
+
+## 概述
+
+SkyrocAdmin 采用 **Redux Toolkit** 管理全局状态，结合 **TanStack Query** 管理服务端状态，实现清晰的状态分层。
+
+## 状态分层
+
+### 客户端状态 (Redux)
+
+由 Redux Toolkit 管理的本地 UI 状态：
+
+- **app** - 应用状态（侧边栏折叠、全屏内容、移动端等）
+- **auth** - 认证状态（Token、登录状态、用户信息）
+- **theme** - 主题配置（主题色、暗黑模式、布局配置）
+- **route** - 路由缓存状态
+- **tab** - 标签页状态
+
+### 服务端状态 (TanStack Query)
+
+由 TanStack Query 管理的远程数据：
+
+- 用户列表、角色列表等业务数据
+- 自动缓存、重新验证、乐观更新
+- 请求状态管理（loading、error）
+
+## Redux Store 结构
+
+```typescript
+{
+  app: {
+    siderCollapse: boolean,      // 侧边栏折叠状态
+    fullContent: boolean,         // 全屏内容
+    isMobile: boolean,            // 是否移动端
+    mixSiderFixed: boolean        // 混合侧边栏固定
+  },
+  auth: {
+    token: string,                // 访问令牌
+    isLogin: boolean              // 是否登录
+  },
+  theme: {
+    themeColor: string,           // 主题色
+    darkMode: boolean,            // 暗黑模式
+    settings: { ... }             // 主题配置
+  },
+  route: {
+    cacheRoutes: string[],        // 缓存的路由
+    removeCacheKey: string        // 移除缓存的 key
+  },
+  tab: {
+    tabs: Tab[],                  // 标签页列表
+    activeTabId: string           // 当前激活标签页
+  }
+}
+```
+
+**代码位置**: `src/store/` 和 `src/features/*/`
+
+## Slice 定义
+
+使用 Redux Toolkit 的 `createSlice` 定义状态切片：
+
+```typescript
+const authSlice = createSlice({
+  name: 'auth',
+  initialState,
+  reducers: {
+    setToken(state, action) {
+      state.token = action.payload;
+    },
+    clearAuth(state) {
+      state.token = '';
+      state.isLogin = false;
+    }
+  }
+});
+```
+
+## 使用状态
+
+### 读取状态
+
+```typescript
+import { useAppSelector } from '@/store';
+
+const Component = () => {
+  const token = useAppSelector(state => state.auth.token);
+  const darkMode = useAppSelector(state => state.theme.darkMode);
+};
+```
+
+### 更新状态
+
+```typescript
+import { useAppDispatch } from '@/store';
+import { setToken } from '@/features/auth/authStore';
+
+const Component = () => {
+  const dispatch = useAppDispatch();
+
+  const login = () => {
+    dispatch(setToken('new-token'));
+  };
+};
+```
+
+## TanStack Query
+
+### 查询数据
+
+```typescript
+import { useUserInfo } from '@/service/hooks/useAuth';
+
+const Component = () => {
+  const { data, isLoading, error } = useUserInfo();
+};
+```
+
+### 修改数据
+
+```typescript
+import { useLogin } from '@/service/hooks/useAuth';
+
+const Component = () => {
+  const { mutateAsync: login, isPending } = useLogin();
+
+  const handleLogin = async () => {
+    await login({ username, password });
+  };
+};
+```
+
+## 持久化
+
+使用 `localStorage` 持久化关键状态：
+
+- Token 和用户信息
+- 主题配置
+- 语言设置
+- 标签页数据
+
+**工具**: `src/utils/storage.ts` 中的 `localStg`

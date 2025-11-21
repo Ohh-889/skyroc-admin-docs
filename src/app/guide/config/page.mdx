@@ -1,0 +1,348 @@
+---
+title: 项目配置
+---
+
+## 全局配置
+
+### GlobalConfig 类
+
+项目核心配置定义在 `src/config.ts` 中：
+
+```typescript
+class GlobalConfig {
+  // 默认暗黑模式
+  defaultDarkMode: boolean = false;
+
+  // 默认语言
+  defaultLang: App.I18n.LangType = 'zh-CN';
+
+  // 默认主题色
+  defaultThemeColor: string = '#646cff';
+
+  // 是否开发环境
+  isDev: boolean = import.meta.env.DEV;
+
+  // 首页路径
+  homePath: string = import.meta.env.VITE_ROUTE_HOME || '/home';
+
+  // 服务基础 URL
+  serviceBaseURL: string = import.meta.env.VITE_SERVICE_BASE_URL;
+
+  // 路由模式
+  routerMode: 'history' | 'hash' = import.meta.env.VITE_ROUTER_MODE || 'history';
+
+  // 水印文本
+  watermarkText: string = 'SkyrocAdmin';
+}
+
+export const globalConfig = new GlobalConfig();
+```
+
+**代码位置**: `src/config.ts`
+
+### 使用配置
+
+```typescript
+import { globalConfig } from '@/config';
+
+// 获取首页路径
+const homePath = globalConfig.homePath;
+
+// 判断是否开发环境
+if (globalConfig.isDev) {
+  console.log('开发环境');
+}
+```
+
+## 环境变量
+
+### 变量定义
+
+在 `.env` 文件中定义：
+
+```bash
+# 应用配置
+VITE_APP_TITLE=SkyrocAdmin
+VITE_APP_DESC=企业级中后台管理模板
+
+# 服务配置
+VITE_SERVICE_BASE_URL=http://localhost:8080
+VITE_SERVICE_SUCCESS_CODE=0000
+VITE_SERVICE_EXPIRED_TOKEN_CODES=1001,1002
+VITE_SERVICE_LOGOUT_CODES=1003
+VITE_SERVICE_MODAL_LOGOUT_CODES=1004
+
+# 路由配置
+VITE_ROUTER_MODE=history
+VITE_ROUTE_HOME=/home
+VITE_AUTH_ROUTE_MODE=static
+VITE_STATIC_SUPER_ROLE=R_SUPER
+
+# 其他配置
+VITE_WATERMARK_TEXT=SkyrocAdmin
+```
+
+### 类型定义
+
+```typescript
+// src/types/env.d.ts
+interface ImportMetaEnv {
+  readonly VITE_APP_TITLE: string;
+  readonly VITE_SERVICE_BASE_URL: string;
+  readonly VITE_ROUTER_MODE: 'history' | 'hash';
+  readonly VITE_ROUTE_HOME: string;
+  readonly VITE_AUTH_ROUTE_MODE: 'static' | 'dynamic';
+  // ...
+}
+```
+
+### 使用环境变量
+
+```typescript
+// 直接使用
+const baseURL = import.meta.env.VITE_SERVICE_BASE_URL;
+
+// 通过 globalConfig 访问
+import { globalConfig } from '@/config';
+const homePath = globalConfig.homePath;
+```
+
+## 主题配置
+
+### 主题设置
+
+```typescript
+interface ThemeSettings {
+  // 主题色
+  themeColor: string;
+
+  // 主题模式
+  themeScheme: 'light' | 'dark' | 'system';
+
+  // 布局模式
+  layout: {
+    mode: 'vertical' | 'horizontal' | 'vertical-mix' | 'horizontal-mix';
+    scrollMode: 'content' | 'wrapper';
+  };
+
+  // 侧边栏配置
+  sider: {
+    width: number;
+    collapsedWidth: number;
+    collapsed: boolean;
+  };
+
+  // 头部配置
+  header: {
+    height: number;
+    breadcrumb: { visible: boolean };
+  };
+
+  // 标签页配置
+  tab: {
+    visible: boolean;
+    height: number;
+    mode: 'chrome' | 'button';
+    cache: boolean;
+  };
+
+  // 页脚配置
+  footer: {
+    visible: boolean;
+    fixed: boolean;
+    height: number;
+  };
+}
+```
+
+**代码位置**: `src/store/slice/theme`
+
+### 修改主题配置
+
+```typescript
+import { useAppDispatch } from '@/store';
+import { updateThemeSettings } from '@/store/slice/theme';
+
+// 修改主题色
+dispatch(updateThemeSettings({ themeColor: '#1890ff' }));
+
+// 修改布局模式
+dispatch(updateThemeSettings({
+  layout: { mode: 'horizontal' }
+}));
+
+// 修改多个配置
+dispatch(updateThemeSettings({
+  themeColor: '#1890ff',
+  tab: { visible: true, mode: 'chrome' }
+}));
+```
+
+## TypeScript 配置
+
+### tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+
+    // 路径别名
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@sa/*": ["packages/*/src"]
+    }
+  }
+}
+```
+
+### 路径别名
+
+项目配置了以下路径别名：
+
+- `@/` → `src/`
+- `@sa/` → `packages/*/src/`
+
+使用示例：
+
+```typescript
+import { useAuth } from '@/features/auth';
+import { useBoolean } from '@sa/hooks';
+```
+
+## Vite 配置
+
+### 关键配置
+
+```typescript
+// vite.config.ts
+export default defineConfig({
+  // 路径别名
+  resolve: {
+    alias: {
+      '@': '/src',
+      '@sa': '/packages'
+    }
+  },
+
+  // 服务器配置
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      }
+    }
+  },
+
+  // 构建配置
+  build: {
+    target: 'es2020',
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'antd-vendor': ['antd'],
+          'query-vendor': ['@tanstack/react-query']
+        }
+      }
+    }
+  }
+});
+```
+
+**代码位置**: `vite.config.ts`
+
+## ESLint 配置
+
+### 规则配置
+
+```javascript
+// .eslintrc.js
+module.exports = {
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react-hooks/recommended'
+  ],
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'warn',
+    'react-hooks/exhaustive-deps': 'warn',
+    'no-console': ['warn', { allow: ['warn', 'error'] }]
+  }
+};
+```
+
+## Prettier 配置
+
+### 格式化配置
+
+```json
+{
+  "semi": true,
+  "singleQuote": true,
+  "printWidth": 120,
+  "tabWidth": 2,
+  "trailingComma": "none",
+  "arrowParens": "avoid"
+}
+```
+
+**代码位置**: `.prettierrc`
+
+## Git Hooks
+
+### Husky 配置
+
+项目使用 Husky 配置 Git Hooks：
+
+- **pre-commit** - 代码格式化和 lint 检查
+- **commit-msg** - 提交信息规范检查
+
+**代码位置**: `.husky/`
+
+### 提交信息规范
+
+遵循 Conventional Commits 规范：
+
+```bash
+type(scope): subject
+
+# 类型
+feat:     新功能
+fix:      修复
+docs:     文档
+style:    格式
+refactor: 重构
+test:     测试
+chore:    构建/工具
+```
+
+使用 CLI 工具生成规范提交：
+
+```bash
+pnpm sa git-commit
+```
+
+## 最佳实践
+
+1. **环境变量** - 敏感信息使用环境变量，不要硬编码
+2. **类型定义** - 为所有配置提供 TypeScript 类型
+3. **配置分层** - 全局配置、主题配置、环境配置分离
+4. **文档同步** - 修改配置时更新相关文档
+5. **默认值** - 为所有配置项提供合理的默认值

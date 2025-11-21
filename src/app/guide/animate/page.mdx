@@ -1,0 +1,318 @@
+---
+title: 动画系统
+---
+
+## 概述
+
+项目基于 **Motion** (Framer Motion) 实现流畅的动画效果，支持页面过渡、组件动画等。
+
+## 核心库
+
+### Motion
+
+Motion 是 React 的动画库，提供声明式的动画 API。
+
+**官方文档**: https://motion.dev/
+
+### LazyMotion
+
+使用 LazyMotion 实现按需加载动画功能，减少包体积。
+
+**代码位置**: `src/features/animate/LazyMotion.tsx`
+
+```tsx
+import { LazyMotion } from '@/features/animate';
+
+function App() {
+  return (
+    <LazyMotion>
+      <YourApp />
+    </LazyMotion>
+  );
+}
+```
+
+## 基础动画
+
+### 淡入淡出
+
+```tsx
+import { motion } from 'motion/react';
+
+function FadeIn() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      内容
+    </motion.div>
+  );
+}
+```
+
+### 滑动进入
+
+```tsx
+<motion.div
+  initial={{ x: -20, opacity: 0 }}
+  animate={{ x: 0, opacity: 1 }}
+  transition={{ duration: 0.3 }}
+>
+  内容
+</motion.div>
+```
+
+### 缩放动画
+
+```tsx
+<motion.div
+  initial={{ scale: 0.9, opacity: 0 }}
+  animate={{ scale: 1, opacity: 1 }}
+  transition={{ duration: 0.3 }}
+>
+  内容
+</motion.div>
+```
+
+## 页面过渡
+
+### 路由切换动画
+
+```tsx
+import { motion } from 'motion/react';
+import { Outlet } from 'react-router-dom';
+
+function AnimatedOutlet() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Outlet />
+    </motion.div>
+  );
+}
+```
+
+## 交互动画
+
+### Hover 效果
+
+```tsx
+<motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  transition={{ type: 'spring', stiffness: 400 }}
+>
+  按钮
+</motion.button>
+```
+
+### Tap 效果
+
+```tsx
+<motion.div
+  whileTap={{ scale: 0.98 }}
+  transition={{ duration: 0.1 }}
+>
+  可点击内容
+</motion.div>
+```
+
+## 列表动画
+
+### 交错动画
+
+```tsx
+import { motion } from 'motion/react';
+
+function List({ items }) {
+  return (
+    <motion.div>
+      {items.map((item, i) => (
+        <motion.div
+          key={item.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.1 }}
+        >
+          {item.content}
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
+```
+
+## 滚动动画
+
+### 进入视口动画
+
+```tsx
+import { motion, useInView } from 'motion/react';
+import { useRef } from 'react';
+
+function ScrollReveal() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.6 }}
+    >
+      滚动到视口内才显示
+    </motion.div>
+  );
+}
+```
+
+## 布局动画
+
+### 自动布局动画
+
+```tsx
+<motion.div layout>
+  {/* 当尺寸或位置变化时自动添加动画 */}
+  内容
+</motion.div>
+```
+
+### Shared Layout
+
+```tsx
+import { AnimatePresence, motion } from 'motion/react';
+
+function Tabs({ selected }) {
+  return (
+    <div>
+      {tabs.map(tab => (
+        <div key={tab.id}>
+          {tab.label}
+          {selected === tab.id && (
+            <motion.div
+              layoutId="underline"
+              style={{ borderBottom: '2px solid blue' }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## AnimatePresence
+
+用于处理组件的进入和退出动画：
+
+```tsx
+import { AnimatePresence, motion } from 'motion/react';
+
+function Modal({ isOpen, onClose }) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div>Modal 内容</div>
+          <button onClick={onClose}>关闭</button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+```
+
+## 性能优化
+
+### 使用 LazyMotion
+
+项目已配置 LazyMotion 按需加载：
+
+```tsx
+// 已在 App 组件配置
+import { LazyMotion } from '@/features/animate';
+
+<LazyMotion>
+  <App />
+</LazyMotion>
+```
+
+### 使用 will-change
+
+```tsx
+<motion.div
+  style={{ willChange: 'transform' }}
+  animate={{ x: 100 }}
+>
+  内容
+</motion.div>
+```
+
+### 避免布局抖动
+
+使用 `transform` 代替 `top/left`：
+
+```tsx
+// 推荐
+<motion.div animate={{ x: 100 }} />
+
+// 不推荐
+<motion.div animate={{ left: 100 }} />
+```
+
+## 预设动画
+
+### 弹性动画
+
+```tsx
+<motion.div
+  animate={{ scale: 1.2 }}
+  transition={{
+    type: 'spring',
+    stiffness: 260,
+    damping: 20
+  }}
+>
+  内容
+</motion.div>
+```
+
+### 缓动动画
+
+```tsx
+<motion.div
+  animate={{ x: 100 }}
+  transition={{
+    type: 'tween',
+    ease: 'easeInOut',
+    duration: 0.5
+  }}
+>
+  内容
+</motion.div>
+```
+
+## 最佳实践
+
+1. **性能优先** - 优先使用 `transform` 和 `opacity`
+2. **按需加载** - 使用 LazyMotion 减少包体积
+3. **合理使用** - 不要过度使用动画
+4. **用户体验** - 动画时长建议 0.2-0.5 秒
+5. **无障碍** - 尊重用户的减少动画偏好
+
+## 相关文档
+
+- [Motion 官方文档](https://motion.dev/)
+- [组件库](/guide/components) - 通用组件

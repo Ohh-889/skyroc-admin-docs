@@ -1,0 +1,431 @@
+---
+title: 表格组件
+---
+
+## 概述
+
+项目封装了 `useTable` Hook，简化 Ant Design Table 的使用，集成分页、查询、列控制等功能。
+
+## useTable
+
+### 核心功能
+
+- 自动分页
+- URL 查询参数同步
+- 列显示/隐藏控制
+- 拖拽排序
+- 移动端适配
+- 与 TanStack Query 集成
+
+**代码位置**: `src/features/table/use-table.ts`
+
+### 基础使用
+
+```tsx
+import { useTable } from '@/features/table';
+import { fetchUserList } from '@/service/api';
+
+function UserTable() {
+  const { data, columns, loading, pagination, tableProps } = useTable({
+    apiFn: fetchUserList,
+    apiParams: {},
+    columns: () => [
+      {
+        title: '用户名',
+        dataIndex: 'userName',
+        key: 'userName'
+      },
+      {
+        title: '邮箱',
+        dataIndex: 'email',
+        key: 'email'
+      }
+    ],
+    immediate: true
+  });
+
+  return (
+    <Table
+      {...tableProps}
+      dataSource={data}
+      columns={columns}
+      loading={loading}
+      pagination={pagination}
+    />
+  );
+}
+```
+
+### 配置项
+
+```typescript
+interface Config {
+  // API 函数
+  apiFn: (params) => Promise<{ data: any[]; total: number }>;
+
+  // API 参数
+  apiParams?: Record<string, any>;
+
+  // 列配置（函数形式）
+  columns: () => ColumnType[];
+
+  // 是否立即请求
+  immediate?: boolean;
+
+  // 是否同步 URL
+  isChangeURL?: boolean;
+
+  // 分页配置
+  pagination?: PaginationConfig;
+
+  // 行 key
+  rowKey?: string;
+
+  // 参数转换函数
+  transformParams?: (params) => any;
+
+  // 表格属性
+  ...tableProps
+}
+```
+
+### 返回值
+
+```typescript
+{
+  // 表格数据
+  data: any[];
+
+  // 列配置
+  columns: ColumnType[];
+
+  // 加载状态
+  loading: boolean;
+
+  // 分页配置
+  pagination: PaginationConfig;
+
+  // 表格属性
+  tableProps: TableProps;
+
+  // 列控制
+  columnChecks: string[];
+  setColumnChecks: (checks: string[]) => void;
+
+  // 空数据状态
+  empty: boolean;
+
+  // Form 实例
+  form: FormInstance;
+
+  // 是否移动端
+  isMobile: boolean;
+
+  // 刷新数据
+  onRefresh: () => void;
+}
+```
+
+## 高级功能
+
+### 查询表单集成
+
+```tsx
+function UserTable() {
+  const { form, onRefresh, tableProps } = useTable({
+    apiFn: fetchUserList,
+    apiParams: {
+      userName: '',
+      status: ''
+    },
+    columns: () => [...],
+    immediate: true
+  });
+
+  const handleSearch = () => {
+    const values = form.getFieldsValue();
+    // 触发查询
+    onRefresh();
+  };
+
+  return (
+    <>
+      <Form form={form} onFinish={handleSearch}>
+        <Form.Item name="userName">
+          <Input placeholder="用户名" />
+        </Form.Item>
+        <Form.Item name="status">
+          <Select placeholder="状态" />
+        </Form.Item>
+        <Button type="primary" htmlType="submit">
+          查询
+        </Button>
+      </Form>
+      <Table {...tableProps} />
+    </>
+  );
+}
+```
+
+### 列控制
+
+```tsx
+import { TableHeaderOperation } from '@/features/table';
+
+function UserTable() {
+  const {
+    columns,
+    columnChecks,
+    setColumnChecks,
+    onRefresh,
+    tableProps
+  } = useTable({
+    apiFn: fetchUserList,
+    columns: () => [
+      { key: 'userName', title: '用户名', dataIndex: 'userName' },
+      { key: 'email', title: '邮箱', dataIndex: 'email' },
+      { key: 'phone', title: '手机号', dataIndex: 'phone' }
+    ]
+  });
+
+  return (
+    <>
+      <TableHeaderOperation
+        columns={columns}
+        columnChecks={columnChecks}
+        onColumnChecksChange={setColumnChecks}
+        onRefresh={onRefresh}
+      />
+      <Table {...tableProps} />
+    </>
+  );
+}
+```
+
+### 拖拽排序
+
+```tsx
+import { DragContent } from '@/features/table';
+
+function UserTable() {
+  const { data, columns, tableProps } = useTable({
+    apiFn: fetchUserList,
+    columns: () => [...]
+  });
+
+  const handleDragEnd = (newData) => {
+    // 处理排序后的数据
+  };
+
+  return (
+    <Table
+      {...tableProps}
+      dataSource={data}
+      columns={columns}
+      components={{
+        body: {
+          wrapper: (props) => (
+            <DragContent {...props} onDragEnd={handleDragEnd} />
+          )
+        }
+      }}
+    />
+  );
+}
+```
+
+### URL 同步
+
+默认情况下，表格的查询参数会同步到 URL：
+
+```tsx
+const { tableProps } = useTable({
+  apiFn: fetchUserList,
+  apiParams: { page: 1, size: 10 },
+  isChangeURL: true  // 默认 true
+});
+
+// URL 会自动变为: /users?page=1&size=10
+```
+
+关闭 URL 同步：
+
+```tsx
+const { tableProps } = useTable({
+  apiFn: fetchUserList,
+  isChangeURL: false
+});
+```
+
+### 移动端适配
+
+表格自动检测移动端并调整显示：
+
+```tsx
+const { isMobile, tableProps } = useTable({
+  apiFn: fetchUserList,
+  columns: () => [...]
+});
+
+return (
+  <Table
+    {...tableProps}
+    scroll={isMobile ? { x: 'max-content' } : undefined}
+  />
+);
+```
+
+## 表格操作组件
+
+### TableHeaderOperation
+
+表格头部操作栏，包含列控制、刷新等功能：
+
+```tsx
+<TableHeaderOperation
+  columns={columns}
+  columnChecks={columnChecks}
+  onColumnChecksChange={setColumnChecks}
+  onRefresh={onRefresh}
+  extra={<Button>自定义按钮</Button>}
+/>
+```
+
+**属性**：
+- `columns` - 列配置
+- `columnChecks` - 选中的列
+- `onColumnChecksChange` - 列变化回调
+- `onRefresh` - 刷新回调
+- `extra` - 额外操作
+
+## 完整示例
+
+```tsx
+import { useTable, TableHeaderOperation } from '@/features/table';
+import { fetchUserList } from '@/service/api';
+import { Button, Space, Table, Tag } from 'antd';
+
+function UserManagement() {
+  const {
+    data,
+    columns,
+    columnChecks,
+    setColumnChecks,
+    loading,
+    pagination,
+    form,
+    onRefresh,
+    tableProps
+  } = useTable({
+    apiFn: fetchUserList,
+    apiParams: {
+      userName: '',
+      status: ''
+    },
+    columns: () => [
+      {
+        key: 'userName',
+        title: '用户名',
+        dataIndex: 'userName',
+        fixed: 'left'
+      },
+      {
+        key: 'email',
+        title: '邮箱',
+        dataIndex: 'email'
+      },
+      {
+        key: 'phone',
+        title: '手机号',
+        dataIndex: 'phone'
+      },
+      {
+        key: 'status',
+        title: '状态',
+        dataIndex: 'status',
+        render: (status) => (
+          <Tag color={status === 1 ? 'green' : 'red'}>
+            {status === 1 ? '启用' : '禁用'}
+          </Tag>
+        )
+      },
+      {
+        key: 'action',
+        title: '操作',
+        fixed: 'right',
+        render: (_, record) => (
+          <Space>
+            <Button type="link" onClick={() => handleEdit(record)}>
+              编辑
+            </Button>
+            <Button type="link" danger onClick={() => handleDelete(record)}>
+              删除
+            </Button>
+          </Space>
+        )
+      }
+    ],
+    immediate: true,
+    pagination: {
+      pageSize: 20
+    }
+  });
+
+  const handleEdit = (record) => {
+    // 编辑逻辑
+  };
+
+  const handleDelete = (record) => {
+    // 删除逻辑
+  };
+
+  return (
+    <div>
+      <Form form={form} layout="inline">
+        <Form.Item name="userName">
+          <Input placeholder="用户名" />
+        </Form.Item>
+        <Form.Item name="status">
+          <Select placeholder="状态">
+            <Select.Option value="">全部</Select.Option>
+            <Select.Option value="1">启用</Select.Option>
+            <Select.Option value="0">禁用</Select.Option>
+          </Select>
+        </Form.Item>
+        <Button type="primary" onClick={onRefresh}>
+          查询
+        </Button>
+      </Form>
+
+      <TableHeaderOperation
+        columns={columns}
+        columnChecks={columnChecks}
+        onColumnChecksChange={setColumnChecks}
+        onRefresh={onRefresh}
+        extra={<Button type="primary">新增用户</Button>}
+      />
+
+      <Table
+        {...tableProps}
+        dataSource={data}
+        columns={columns}
+        loading={loading}
+        pagination={pagination}
+      />
+    </div>
+  );
+}
+```
+
+## 最佳实践
+
+1. **使用 columns 工厂函数** - 支持动态列配置
+2. **合理设置 immediate** - 需要立即加载数据时设为 true
+3. **URL 同步** - 列表页面建议开启 URL 同步
+4. **移动端适配** - 使用 `isMobile` 调整表格显示
+5. **列控制** - 提供列显示/隐藏功能提升用户体验
+
+## 相关文档
+
+- [Hooks](/hooks) - 自定义 Hooks
+- [请求管理](/request) - API 请求

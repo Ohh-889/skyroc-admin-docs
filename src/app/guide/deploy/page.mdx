@@ -1,0 +1,298 @@
+---
+title: 构建与部署
+---
+
+## 本地开发
+
+### 启动开发服务器
+
+```bash
+pnpm dev
+```
+
+访问 `http://localhost:5173`
+
+### 开发模式特性
+
+- 热更新 (HMR)
+- 源码映射 (Source Maps)
+- 开发工具集成
+- Mock 数据支持
+
+## 生产构建
+
+### 构建命令
+
+```bash
+# 构建生产版本
+pnpm build
+
+# 预览生产构建
+pnpm preview
+```
+
+### 构建产物
+
+构建完成后，产物位于 `dist/` 目录：
+
+```
+dist/
+├── assets/          # 静态资源（JS、CSS、图片等）
+├── index.html       # 入口 HTML
+└── ...
+```
+
+### 构建优化
+
+- 代码分割 (Code Splitting)
+- Tree Shaking
+- 资源压缩
+- CSS 提取
+- 图片优化
+
+**代码位置**: `vite.config.ts`
+
+## 环境变量
+
+### .env 文件
+
+项目支持多环境配置：
+
+- `.env` - 所有环境的默认配置
+- `.env.development` - 开发环境
+- `.env.production` - 生产环境
+
+### 关键环境变量
+
+```bash
+# 应用标题
+VITE_APP_TITLE=SkyrocAdmin
+
+# 服务接口地址
+VITE_SERVICE_BASE_URL=http://localhost:8080
+
+# 路由模式
+VITE_ROUTER_MODE=history
+
+# 首页路径
+VITE_ROUTE_HOME=/home
+
+# 认证路由模式 (static/dynamic)
+VITE_AUTH_ROUTE_MODE=static
+
+# 服务成功码
+VITE_SERVICE_SUCCESS_CODE=0000
+
+# Token 过期码
+VITE_SERVICE_EXPIRED_TOKEN_CODES=1001,1002
+
+# 登出码
+VITE_SERVICE_LOGOUT_CODES=1003
+```
+
+**代码位置**: `env-config.ts`, `src/types/env.d.ts`
+
+## 部署方案
+
+### Nginx
+
+#### 1. 构建项目
+
+```bash
+pnpm build
+```
+
+#### 2. Nginx 配置
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    root /var/www/your-app/dist;
+    index index.html;
+
+    # Gzip 压缩
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript;
+
+    # SPA 路由支持
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 静态资源缓存
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # API 代理
+    location /api/ {
+        proxy_pass http://backend-server:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+### Docker
+
+#### Dockerfile
+
+```dockerfile
+# 构建阶段
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# 安装 pnpm
+RUN npm install -g pnpm
+
+# 复制依赖文件
+COPY package.json pnpm-lock.yaml ./
+COPY packages/ ./packages/
+
+# 安装依赖
+RUN pnpm install --frozen-lockfile
+
+# 复制源码
+COPY . .
+
+# 构建
+RUN pnpm build
+
+# 运行阶段
+FROM nginx:alpine
+
+# 复制构建产物
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# 复制 nginx 配置
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+#### docker-compose.yml
+
+```yaml
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+```
+
+### Vercel / Netlify
+
+#### vercel.json
+
+```json
+{
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist",
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "headers": { "cache-control": "max-age=31536000,immutable" },
+      "dest": "/assets/$1"
+    },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
+```
+
+#### netlify.toml
+
+```toml
+[build]
+  command = "pnpm build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "max-age=31536000, immutable"
+```
+
+## 性能优化
+
+### 代码分割
+
+Vite 自动进行代码分割，按路由懒加载：
+
+```typescript
+// 路由懒加载
+const Dashboard = lazy(() => import('@/pages/dashboard'));
+```
+
+### CDN 加速
+
+将静态资源部署到 CDN：
+
+```typescript
+// vite.config.ts
+export default defineConfig({
+  base: 'https://cdn.your-domain.com/',
+  build: {
+    assetsDir: 'assets'
+  }
+});
+```
+
+### 压缩
+
+启用 gzip / brotli 压缩：
+
+```typescript
+import viteCompression from 'vite-plugin-compression';
+
+export default defineConfig({
+  plugins: [
+    viteCompression({
+      algorithm: 'gzip',
+      ext: '.gz'
+    })
+  ]
+});
+```
+
+## 常见问题
+
+### 路由 404
+
+确保服务器配置了 SPA 回退：
+- Nginx: `try_files $uri $uri/ /index.html;`
+- Apache: `.htaccess` 配置 `RewriteRule`
+
+### 静态资源路径错误
+
+检查 `vite.config.ts` 中的 `base` 配置
+
+### 环境变量不生效
+
+- 环境变量必须以 `VITE_` 开头
+- 重启开发服务器
+- 检查 `.env` 文件位置
+
+## 最佳实践
+
+1. **分离环境配置** - 使用不同的 `.env` 文件
+2. **启用缓存** - 为静态资源设置长期缓存
+3. **启用压缩** - Gzip / Brotli
+4. **CDN 加速** - 静态资源使用 CDN
+5. **监控部署** - 使用监控工具追踪错误

@@ -1,0 +1,290 @@
+---
+title: 通用组件
+---
+
+## 概述
+
+项目提供了一系列通用组件，用于快速构建页面功能。
+
+**代码位置**: `src/components/`
+
+## 基础组件
+
+### SystemLogo
+
+系统 Logo 组件：
+
+```tsx
+import SystemLogo from '@/components/SystemLogo';
+
+<SystemLogo className="size-32 text-primary" />
+```
+
+**代码位置**: `src/components/SystemLogo.tsx`
+
+### SvgIcon
+
+SVG 图标组件：
+
+```tsx
+import SvgIcon from '@/components/SvgIcon';
+
+<SvgIcon icon="iconify-icon-name" className="text-20px" />
+```
+
+### ButtonIcon
+
+带图标的按钮组件：
+
+```tsx
+import ButtonIcon from '@/components/ButtonIcon';
+
+<ButtonIcon
+  icon="mdi:pencil"
+  tooltip="编辑"
+  onClick={handleEdit}
+/>
+```
+
+## 交互组件
+
+### FullScreen
+
+全屏切换按钮：
+
+```tsx
+import FullScreen from '@/components/FullScreen';
+
+<FullScreen />
+```
+
+### PinToggler
+
+固定切换组件：
+
+```tsx
+import PinToggler from '@/components/PinToggler';
+
+<PinToggler
+  pin={isPinned}
+  onToggle={handleToggle}
+  tooltipPlacement="bottom"
+/>
+```
+
+### DarkModeContainer
+
+暗黑模式容器：
+
+```tsx
+import DarkModeContainer from '@/components/DarkModeContainer';
+
+<DarkModeContainer>
+  {/* 内容会根据主题自动调整 */}
+</DarkModeContainer>
+```
+
+## 滚动组件
+
+### BetterScroll
+
+基于 better-scroll 的滚动容器：
+
+```tsx
+import BetterScroll from '@/components/BetterScroll';
+
+<BetterScroll
+  options={{
+    scrollX: true,
+    scrollY: false
+  }}
+  setBsScroll={setBsScroll}
+>
+  <div>滚动内容</div>
+</BetterScroll>
+```
+
+**属性**:
+- `options` - better-scroll 配置
+- `setBsScroll` - 获取滚动实例
+
+### BeyondHiding
+
+超出隐藏组件：
+
+```tsx
+import BeyondHiding from '@/components/BeyondHiding';
+
+<BeyondHiding maxWidth={200}>
+  <span>超出宽度会隐藏并显示省略号</span>
+</BeyondHiding>
+```
+
+## 动画组件
+
+### NumberTicker
+
+数字滚动动画：
+
+```tsx
+import NumberTicker from '@/components/NumberTicker';
+
+<NumberTicker
+  value={12345}
+  className="text-32px font-bold"
+/>
+```
+
+### TypingAnimation
+
+打字动画效果：
+
+```tsx
+import TypingAnimation from '@/components/TypingAnimation';
+
+<TypingAnimation
+  text="欢迎使用 SkyrocAdmin"
+  duration={50}
+/>
+```
+
+### FilpText
+
+文字翻转动画：
+
+```tsx
+import FilpText from '@/components/FilpText';
+
+<FilpText text="Hello World" />
+```
+
+## 背景组件
+
+### WaveBg
+
+波浪背景：
+
+```tsx
+import WaveBg from '@/components/WaveBg';
+
+<WaveBg
+  className="h-screen"
+  color="#1890ff"
+  opacity={0.3}
+/>
+```
+
+## 错误处理
+
+### ErrorBoundary
+
+错误边界组件：
+
+```tsx
+import ErrorBoundary from '@/components/ErrorBoundary';
+
+<ErrorBoundary
+  fallbackRender={({ error, resetErrorBoundary }) => (
+    <div>
+      <p>出错了：{error.message}</p>
+      <button onClick={resetErrorBoundary}>重试</button>
+    </div>
+  )}
+>
+  <YourComponent />
+</ErrorBoundary>
+```
+
+### ExceptionBase
+
+异常页面基础组件：
+
+```tsx
+import ExceptionBase from '@/components/ExceptionBase';
+
+<ExceptionBase
+  type="404"
+  title="页面不存在"
+  desc="抱歉，您访问的页面不存在"
+/>
+```
+
+## 其他组件
+
+### LookForward
+
+敬请期待组件：
+
+```tsx
+import LookForward from '@/components/LookForward';
+
+<LookForward />
+```
+
+### SkyrocAvatar
+
+用户头像组件：
+
+```tsx
+import SkyrocAvatar from '@/components/SkyrocAvatar';
+
+<SkyrocAvatar
+  src={user.avatar}
+  size={40}
+/>
+```
+
+## 使用示例
+
+### 页面布局
+
+```tsx
+import { FullScreen, ErrorBoundary } from '@/components';
+
+function PageLayout() {
+  return (
+    <ErrorBoundary>
+      <div className="page-header">
+        <h1>页面标题</h1>
+        <FullScreen />
+      </div>
+      <div className="page-content">
+        {/* 内容 */}
+      </div>
+    </ErrorBoundary>
+  );
+}
+```
+
+### 数据展示
+
+```tsx
+import { NumberTicker, TypingAnimation } from '@/components';
+
+function Dashboard() {
+  return (
+    <div>
+      <TypingAnimation text="欢迎回来" />
+      <div className="stats">
+        <div>
+          <span>总用户数</span>
+          <NumberTicker value={1234} />
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+## 最佳实践
+
+1. **按需导入** - 只导入需要的组件
+2. **类型安全** - 使用 TypeScript 类型
+3. **样式定制** - 通过 className 自定义样式
+4. **错误处理** - 关键组件使用 ErrorBoundary 包裹
+5. **性能优化** - 大型组件使用 React.lazy 懒加载
+
+## 相关文档
+
+- [动画系统](/guide/animate) - 动画效果
+- [主题系统](/guide/theme) - 主题配置

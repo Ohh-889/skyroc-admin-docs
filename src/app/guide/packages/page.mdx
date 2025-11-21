@@ -1,0 +1,229 @@
+---
+title: Monorepo 工具包
+---
+
+## 概述
+
+SkyrocAdmin 采用 pnpm workspace 的 Monorepo 架构，将通用功能抽离成独立的包，便于复用和维护。
+
+## 包列表
+
+### @sa/hooks
+
+React Hooks 工具库
+
+**常用 Hooks**:
+- `useBoolean` - 布尔值状态管理
+- `useLoading` - 加载状态管理
+- `useCountDown` - 倒计时
+- `useArray` - 数组状态管理
+
+```typescript
+import { useBoolean, useLoading } from '@sa/hooks';
+
+const { bool, setTrue, setFalse, toggle } = useBoolean(false);
+const { loading, startLoading, endLoading } = useLoading();
+```
+
+**包位置**: `packages/hooks/`
+
+### @sa/utils
+
+通用工具函数库
+
+**主要功能**:
+- 数据转换
+- 格式化
+- 校验
+- 树结构处理
+
+```typescript
+import { formatDate, isPhone, treeToList } from '@sa/utils';
+
+const date = formatDate(new Date(), 'YYYY-MM-DD');
+const valid = isPhone('13800138000');
+const list = treeToList(treeData);
+```
+
+**包位置**: `packages/utils/`
+
+### @sa/color
+
+主题颜色处理工具
+
+**主要功能**:
+- 颜色转换 (Hex, RGB, HSL)
+- 调色板生成
+- 颜色混合
+- 透明度处理
+
+```typescript
+import { getRgb, transformColorWithOpacity } from '@sa/color';
+
+const rgb = getRgb('#1890ff');
+const color = transformColorWithOpacity('#1890ff', 0.5);
+```
+
+**包位置**: `packages/color/`
+
+### @sa/axios
+
+HTTP 请求封装
+
+**核心功能**:
+- 请求/响应拦截器
+- 错误处理
+- 请求取消
+- 超时控制
+
+```typescript
+import { createRequest } from '@sa/axios';
+
+const request = createRequest({
+  baseURL: 'http://localhost:8080',
+  timeout: 10000
+});
+
+const data = await request.get('/api/users');
+```
+
+**包位置**: `packages/axios/`
+
+### @sa/materials
+
+通用组件库
+
+**核心组件**:
+- `AdminLayout` - 后台布局组件
+- `PageTab` - 标签页组件
+- `SimpleScrollbar` - 简单滚动条
+- `LoadingScreen` - 加载屏幕
+
+```tsx
+import { AdminLayout, PageTab } from '@sa/materials';
+
+<AdminLayout
+  mode="vertical"
+  header={<Header />}
+  sider={<Sider />}
+>
+  <Content />
+</AdminLayout>
+```
+
+**包位置**: `packages/materials/`
+
+### @sa/scripts
+
+命令行工具集
+
+**可用命令**:
+- `cleanup` - 清理依赖和构建产物
+- `git-commit` - 规范化提交
+- `update-pkg` - 更新依赖版本
+- `changelog` - 生成更新日志
+- `release` - 发布新版本
+- `gen-route` - 生成路由
+
+```bash
+# 使用 CLI
+pnpm sa cleanup
+pnpm sa git-commit
+pnpm sa release
+```
+
+**包位置**: `packages/scripts/`
+
+### @sa/uno-preset
+
+UnoCSS 预设配置
+
+**功能**:
+- 自定义工具类
+- 主题变量
+- 快捷方式
+
+```typescript
+import { presetSkyrocAdmin } from '@sa/uno-preset';
+
+export default defineConfig({
+  presets: [
+    presetUno(),
+    presetSkyrocAdmin()
+  ]
+});
+```
+
+**包位置**: `packages/uno-preset/`
+
+## 包的使用
+
+### 安装依赖
+
+工作区内的包可以直接引用：
+
+```json
+{
+  "dependencies": {
+    "@sa/hooks": "workspace:*",
+    "@sa/utils": "workspace:*"
+  }
+}
+```
+
+### 导入使用
+
+```typescript
+// 使用路径别名
+import { useBoolean } from '@sa/hooks';
+import { formatDate } from '@sa/utils';
+
+// 或直接从包导入
+import { useBoolean } from '@sa/hooks';
+```
+
+## 开发工具包
+
+### 添加新包
+
+```bash
+# 在 packages 目录下创建新包
+mkdir packages/your-package
+cd packages/your-package
+
+# 初始化 package.json
+pnpm init
+```
+
+### 包结构
+
+```
+packages/your-package/
+├── src/           # 源码
+├── package.json   # 包配置
+├── tsconfig.json  # TypeScript 配置
+└── README.md      # 文档
+```
+
+### 发布包
+
+```bash
+# 构建
+pnpm build
+
+# 发布
+pnpm publish
+```
+
+## 最佳实践
+
+1. **单一职责** - 每个包专注于特定功能
+2. **清晰文档** - 为每个包提供 README
+3. **类型定义** - 导出完整的 TypeScript 类型
+4. **版本管理** - 使用语义化版本控制
+5. **依赖管理** - 避免包之间的循环依赖
+
+## 相关文档
+
+- [项目配置](/guide/config) - 配置说明
+- [命令行工具](/guide/cli) - CLI 使用
