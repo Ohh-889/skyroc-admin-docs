@@ -1,6 +1,7 @@
 import { Logo, QQ } from '@icons';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { ThemeProvider } from 'next-themes';
 import { Head } from 'nextra/components';
 import { getPageMap } from 'nextra/page-map';
 import { Layout, Navbar } from 'nextra-theme-docs';
@@ -46,7 +47,9 @@ const navbar = (
   />
 );
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout(props: { children: React.ReactNode }) {
+  const { children } = props;
+
   const pageMap = await getPageMap();
 
   return (
@@ -58,21 +61,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <Head />
 
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Layout
-          docsRepositoryBase="https://github.com/Ohh-889/skyroc-admin-docs"
-          editLink="在github上编辑此页面"
-          footer={<GlobalFooter />}
-          navbar={navbar}
-          pageMap={pageMap}
-          sidebar={{ defaultMenuCollapseLevel: 1 }}
-          feedback={{
-            content: '反馈',
-            labels: 'feedback'
-          }}
+        <ThemeProvider
+          disableTransitionOnChange
+          enableSystem
+          attribute="class"
+          defaultTheme="system"
         >
-          {children}
-        </Layout>
-
+          <Layout
+            docsRepositoryBase="https://github.com/Ohh-889/skyroc-admin-docs"
+            editLink="在github上编辑此页面"
+            footer={<GlobalFooter />}
+            navbar={navbar}
+            pageMap={pageMap}
+            sidebar={{ defaultMenuCollapseLevel: 1 }}
+            feedback={{
+              content: '反馈',
+              labels: 'feedback'
+            }}
+          >
+            {children}
+          </Layout>
+        </ThemeProvider>
         <Toaster />
       </body>
     </html>

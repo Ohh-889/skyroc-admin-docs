@@ -1,12 +1,28 @@
 'use client';
 import { motion } from 'framer-motion';
 import { GitBranch, Globe, Layers, Lock, Palette, Zap } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { StatCard } from './Card';
 import { ScreenshotDisplay } from './otherComponents';
 
 export const ScreenshotSection: React.FC = () => {
+  const [particles, setParticles] = useState<Array<{ delay: number; left: number; repeatDelay: number; top: number }>>(
+    []
+  );
+
+  // 在客户端生成随机粒子位置，避免 hydration 错误
+  useEffect(() => {
+    setParticles(
+      Array.from({ length: 20 }, () => ({
+        delay: Math.random() * 5,
+        left: Math.random() * 100,
+        repeatDelay: Math.random() * 5,
+        top: Math.random() * 100
+      }))
+    );
+  }, []);
+
   const iconItems = [
     { color: 'text-yellow-400', Icon: Zap },
     { color: 'text-green-400', Icon: GitBranch },
@@ -154,31 +170,33 @@ export const ScreenshotSection: React.FC = () => {
       <div className="absolute top-1/3 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 left-0 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl" />
 
-      {/* 粒子效果 */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            className="absolute w-1 h-1 bg-blue-400 rounded-full"
-            key={i}
-            animate={{
-              opacity: [0, 1, 0],
-              scale: [0, 1, 0],
-              y: [0, -100]
-            }}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`
-            }}
-            transition={{
-              delay: Math.random() * 5,
-              duration: 3,
-              ease: 'easeOut',
-              repeat: Infinity,
-              repeatDelay: Math.random() * 5
-            }}
-          />
-        ))}
-      </div>
+      {/* 粒子效果 - 只在客户端渲染 */}
+      {particles.length > 0 && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {particles.map((particle, i) => (
+            <motion.div
+              className="absolute w-1 h-1 bg-blue-400 rounded-full"
+              key={i}
+              animate={{
+                opacity: [0, 1, 0],
+                scale: [0, 1, 0],
+                y: [0, -100]
+              }}
+              style={{
+                left: `${particle.left}%`,
+                top: `${particle.top}%`
+              }}
+              transition={{
+                delay: particle.delay,
+                duration: 3,
+                ease: 'easeOut',
+                repeat: Infinity,
+                repeatDelay: particle.repeatDelay
+              }}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 };
