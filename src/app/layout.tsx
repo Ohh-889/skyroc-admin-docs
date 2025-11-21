@@ -7,6 +7,7 @@ import { Layout, Navbar } from 'nextra-theme-docs';
 import { Toaster } from 'sonner';
 
 import '@css/global.css';
+
 import GlobalFooter from './globalFooter';
 
 const geistSans = Geist({

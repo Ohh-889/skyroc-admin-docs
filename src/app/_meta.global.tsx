@@ -70,6 +70,13 @@ const PERSONAL_INSIGHTS_ITEMS: MetaRecord = {
   emitter: '事件总线'
 };
 
+const AUTH_ITEMS: MetaRecord = {
+  // eslint-disable-next-line sort/object-properties
+  index: '概述',
+  menu: '菜单管理',
+  tabs: '权限管理'
+};
+
 export default {
   // eslint-disable-next-line sort/object-properties
   guide: {
@@ -115,6 +122,11 @@ export default {
     title: '指引',
     type: 'page'
   },
+  auth: {
+    items: AUTH_ITEMS,
+    title: '权限',
+    type: 'page'
+  },
   request: {
     items: REQUEST_ITEMS,
     title: '请求',
@@ -146,7 +158,7 @@ export default {
         type: 'separator'
       },
       _2: {
-        href: 'https://github.com/soybeanjs/soybean-admin-react',
+        href: 'https://github.com/soybeanjs/skyroc-admin-react',
         title: 'github'
       },
       _3: {
@@ -158,7 +170,7 @@ export default {
         type: 'separator'
       },
       _5: {
-        href: 'https://github.com/soybeanjs/soybean-admin',
+        href: 'https://github.com/soybeanjs/skyroc-admin',
         title: 'github'
       },
       _6: {
