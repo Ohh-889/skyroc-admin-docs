@@ -1,0 +1,537 @@
+---
+title: 创建动态路由
+---
+
+# 创建动态路由
+
+本文档将指导你如何在动态路由模式下创建新的路由。在开始之前，请确保你已经理解动态路由的基本概念和工作流程。
+
+## 前置阅读
+
+在创建动态路由之前，请先阅读以下文档以理解相关概念：
+
+1. **[动态路由模式工作流程](/routes/init#动态路由模式)** - 了解动态路由的初始化流程和原理
+2. **[路由元信息](/routes/handle)** - 理解路由元信息中各个参数的含义和作用
+
+## 路由元信息参数详解
+
+在创建动态路由时，你需要在后端配置路由的元信息（`handle`）。以下是各个参数的详细说明：
+
+### 基础信息
+
+#### `title` (必需)
+- **类型**: `string`
+- **说明**: 路由标题，可用于文档标题、菜单显示等
+- **示例**: `"用户管理"`
+
+#### `i18nKey` (可选)
+- **类型**: `App.I18n.I18nKey`
+- **说明**: 路由的国际化键值。如果设置，将用于 i18n，此时 `title` 将被忽略
+- **示例**: `"route.user-management"`
+
+### 权限控制
+
+#### `roles` (可选)
+- **类型**: `string[]`
+- **说明**: 路由的角色列表。当前用户拥有至少一个角色时，允许访问该路由。角色列表为空时，表示无需权限
+- **示例**: `["admin", "manager"]`
+
+#### `constant` (可选)
+- **类型**: `boolean`
+- **说明**: 是否为常量路由。当设置为 `true` 时，无需登录，并且该路由在前端定义
+- **默认值**: `false`
+
+### 图标配置
+
+#### `icon` (可选)
+- **类型**: `string`
+- **说明**: Iconify 图标名称。可用于菜单或面包屑中
+- **获取地址**: [https://icones.js.org/](https://icones.js.org/)
+- **示例**: `"mdi:account"`
+
+#### `localIcon` (可选)
+- **类型**: `string`
+- **说明**: 本地图标名称。存在于 `src/assets/svg-icon` 目录下。如果设置，将忽略 `icon` 属性
+- **示例**: `"user"`
+
+#### `iconFontSize` (可选)
+- **类型**: `number`
+- **说明**: 图标大小。宽度和高度相同
+
+### 菜单显示
+
+#### `hideInMenu` (可选)
+- **类型**: `boolean`
+- **说明**: 是否在菜单中隐藏该路由
+- **默认值**: `false`
+- **使用场景**: 如果路由页面在 pages 中创建，但在菜单中不显示，需要设置 `hideInMenu: true`
+
+#### `activeMenu` (可选)
+- **类型**: `RouteKey | null`
+- **说明**: 进入该路由时激活的菜单键。该路由不在菜单中
+- **示例**: 假设路由是 `"user_detail"`，如果设置为 `"user_list"`，则会激活"用户列表"菜单项
+
+### 路由行为
+
+#### `keepAlive` (可选)
+- **类型**: `boolean`
+- **说明**: 是否缓存该路由。设置为 `true` 时，路由切换时保持组件状态
+- **默认值**: `false`
+
+#### `multiTab` (可选)
+- **类型**: `boolean`
+- **说明**: 默认情况下，相同路径的路由会共享一个标签页。若设置为 `true`，则使用多个标签页（即使路径相同）
+- **默认值**: `false`
+
+#### `fixedIndexInTab` (可选)
+- **类型**: `number | null`
+- **说明**: 若设置，路由将在标签页中固定显示，其值表示固定标签页的顺序（首页是特殊的，它将自动保持 fixed）
+
+#### `order` (可选)
+- **类型**: `number | null`
+- **说明**: 路由排序顺序。数值越小，排序越靠前
+
+### 链接配置
+
+#### `href` (可选)
+- **类型**: `string | null`
+- **说明**: 路由的外部链接。如果设置，点击菜单时会跳转到外部链接而不是路由路径
+
+#### `url` (可选)
+- **类型**: `string | null`
+- **说明**: 内嵌外联地址
+
+#### `query` (可选)
+- **类型**: `{ key: string; value: string }[] | null`
+- **说明**: 路由查询参数。如果设置，点击菜单进入该路由时会自动携带的 query 参数
+- **示例**: `[{ key: "tab", value: "list" }]`
+
+## 创建动态路由的步骤
+
+### 步骤 1: 创建前端页面组件
+
+首先，你需要在 `src/pages` 目录下创建对应的页面组件：
+
+```tsx
+// src/pages/user-management/index.tsx
+export default function UserManagement() {
+  return <div>用户管理页面</div>;
+}
+```
+
+### 步骤 2: 在组件映射中注册
+
+在 `src/router/elegant/imports.ts` 中注册你的页面组件：
+
+```ts
+export const pages = {
+  // ... 其他页面
+  UserManagement: () => import('@/pages/user-management'),
+};
+```
+
+> [!NOTE]
+>
+> **布局组件的定义方式**：
+>
+> 布局组件是通过在 `src/pages` 目录下创建对应的文件夹和 `layout.tsx` 文件来定义的，而不是在 `imports.ts` 中注册。
+>
+> 例如：
+> - `src/pages/(base)/layout.tsx` → 对应 `layout.Base`
+> - `src/pages/(blank)/layout.tsx` → 对应 `layout.Blank`
+> - `src/pages/(admin)/layout.tsx` → 对应 `layout.Admin`
+>
+> 如果你需要创建自定义布局，只需要：
+> 1. 在 `src/pages` 目录下创建文件夹，例如 `(custom)`
+> 2. 在该文件夹中创建 `layout.tsx` 文件
+> 3. 在路由配置中使用 `layout: "layout.Custom"` 即可
+>
+> ```tsx
+> // src/pages/(custom)/layout.tsx
+> export default function CustomLayout({ children }: { children: React.ReactNode }) {
+>   return (
+>     <div className="custom-layout">
+>       {/* 你的自定义布局结构 */}
+>       {children}
+>     </div>
+>   );
+> }
+> ```
+
+### 步骤 3: 在后端配置路由
+
+在后端系统中，通过菜单管理界面或直接操作数据库，创建路由配置。
+
+> [!TIP] **布局组件选择 - 本框架的核心特色**
+>
+> 本框架与其他框架最大的不同就是**可以自己选择布局组件**，可以有多个布局组合，而不仅仅是市面上常见的只包含菜单的布局。
+>
+> - **灵活配置**: 每个路由都可以指定不同的布局组件（通过 `layout` 字段），例如 `layout.Base`、`layout.Admin`、`layout.Blank` 等
+> - **多布局组合**: 你可以为不同的业务模块创建不同的布局，实现完全自定义的页面结构
+> - **轻松实现**: 如果你有相关需求，可以很轻松地实现自定义布局，只需要创建布局组件并在 `imports.ts` 中注册即可
+> - **默认布局**: 如果不需要自定义布局，默认使用 `layout.Base`（带有侧边栏菜单的标准后台布局）
+>
+> 这种设计让你可以根据实际业务需求，灵活地为不同路由配置不同的布局，而不会被限制在单一的布局模式中。
+
+以下是完整的路由配置示例：
+
+#### 示例 1: 基础菜单路由
+
+```json
+{
+  "name": "user_management",
+  "path": "/user-management",
+  "component": "page.UserManagement",
+  "layout": "layout.Base",
+  "handle": {
+    "title": "用户管理",
+    "icon": "mdi:account-group",
+    "order": 1,
+    "keepAlive": true,
+    "roles": ["admin"]
+  }
+}
+```
+
+#### 示例 2: 带子路由的目录
+
+```json
+{
+  "name": "system",
+  "path": "/system",
+  "layout": "layout.Base",
+  "handle": {
+    "title": "系统管理",
+    "icon": "mdi:cog",
+    "order": 10
+  },
+  "children": [
+    {
+      "name": "user_list",
+      "path": "users",
+      "component": "page.UserList",
+      "handle": {
+        "title": "用户列表",
+        "icon": "mdi:account-multiple",
+        "order": 1,
+        "keepAlive": true
+      }
+    },
+    {
+      "name": "role_list",
+      "path": "roles",
+      "component": "page.RoleList",
+      "handle": {
+        "title": "角色列表",
+        "icon": "mdi:account-key",
+        "order": 2
+      }
+    }
+  ]
+}
+```
+
+#### 示例 3: 隐藏菜单的路由
+
+```json
+{
+  "name": "user_detail",
+  "path": "/user-management/:id",
+  "component": "page.UserDetail",
+  "layout": "layout.Base",
+  "handle": {
+    "title": "用户详情",
+    "hideInMenu": true,
+    "activeMenu": "user_list",
+    "keepAlive": true
+  }
+}
+```
+
+#### 示例 4: 带查询参数的路由
+
+```json
+{
+  "name": "user_list",
+  "path": "/user-management",
+  "component": "page.UserList",
+  "layout": "layout.Base",
+  "handle": {
+    "title": "用户列表",
+    "query": [
+      { "key": "page", "value": "1" },
+      { "key": "size", "value": "10" }
+    ]
+  }
+}
+```
+
+#### 示例 5: 外链路由
+
+```json
+{
+  "name": "external_docs",
+  "path": "/docs",
+  "handle": {
+    "title": "文档",
+    "icon": "mdi:book-open",
+    "href": "https://example.com/docs"
+  }
+}
+```
+
+### 步骤 4: 验证路由
+
+创建路由后，按以下步骤验证：
+
+1. **刷新页面**: 刷新浏览器页面，让前端重新加载路由配置
+2. **检查菜单**: 确认新路由是否出现在菜单中（如果 `hideInMenu` 为 `false`）
+3. **访问路由**: 直接访问路由路径，确认页面正常加载
+4. **权限验证**: 使用不同角色的用户登录，验证权限控制是否生效
+
+## 通过菜单管理界面创建
+
+系统提供了可视化的菜单管理界面，你可以通过以下步骤创建路由：
+
+1. **登录系统**: 使用管理员账号登录
+2. **进入菜单管理**: 导航到"系统管理" > "菜单管理"
+3. **点击新增**: 点击"新增"按钮打开创建表单
+4. **填写表单**: 根据需求填写各个字段
+5. **保存**: 点击"确定"按钮保存配置
+
+### 表单字段说明
+
+在菜单管理界面中，各个字段对应关系如下：
+
+| 表单字段 | 对应参数 | 说明 |
+|---------|---------|------|
+| 菜单类型 | - | 选择"目录"或"菜单" |
+| 菜单名称 | `handle.title` | 路由标题 |
+| 路由名称 | `name` | 路由的唯一标识 |
+| 路由路径 | `path` | 路由的 URL 路径 |
+| 布局 | `layout` | 布局组件名称 |
+| 国际化key | `handle.i18nKey` | 国际化键值 |
+| 排序 | `handle.order` | 路由排序顺序 |
+| 图标类型 | - | 选择"iconify图标"或"本地图标" |
+| 图标 | `handle.icon` 或 `handle.localIcon` | 图标名称 |
+| 菜单状态 | - | 启用/禁用路由 |
+| 缓存路由 | `handle.keepAlive` | 是否缓存路由 |
+| 常量路由 | `handle.constant` | 是否为常量路由 |
+| 外链 | `handle.href` | 外部链接地址 |
+| 隐藏菜单 | `handle.hideInMenu` | 是否在菜单中隐藏 |
+| 支持多页签 | `handle.multiTab` | 是否支持多标签页 |
+| 固定在页签中的序号 | `handle.fixedIndexInTab` | 固定标签页顺序 |
+| 路由参数 | `handle.query` | 查询参数列表 |
+
+## 常见问题
+
+### Q1: 路由创建后不显示在菜单中？
+
+**A**: 检查以下几点：
+- 确认 `hideInMenu` 设置为 `false` 或未设置
+- 确认用户有访问该路由的权限（检查 `roles` 配置）
+- 刷新页面重新加载路由配置
+- 检查路由的 `order` 值，可能被排序到后面
+
+### Q2: 路由页面显示 404？
+
+**A**: 检查以下几点：
+- 确认页面组件已创建并在 `imports.ts` 中注册
+- 确认 `component` 字段的值与 `imports.ts` 中的键名一致
+- 确认 `layout` 字段的值正确（如果使用布局）
+- 检查浏览器控制台是否有错误信息
+
+### Q3: 路由权限不生效？
+
+**A**: 检查以下几点：
+- 确认 `roles` 配置正确
+- 确认用户角色信息已正确获取
+- 确认路由模式为动态模式（`VITE_AUTH_ROUTE_MODE=dynamic`）
+- 检查后端是否正确返回了用户角色信息
+
+### Q4: 路由缓存不生效？
+
+**A**: 检查以下几点：
+- 确认 `keepAlive` 设置为 `true`
+- 确认路由路径正确
+- 检查路由转换是否正确收集了缓存路由
+
+### Q5: 子路由如何配置？
+
+**A**: 有两种方式：
+1. **嵌套配置**: 在父路由的 `children` 字段中配置子路由
+2. **独立配置**: 单独创建子路由，通过 `parent` 字段指定父路由名称
+
+推荐使用嵌套配置，结构更清晰。
+
+## 最佳实践
+
+### 1. 路由命名规范
+
+- 使用小写字母和下划线：`user_management`、`role_list`
+- 保持命名一致性：列表页面使用 `_list` 后缀，详情页面使用 `_detail` 后缀
+- 避免使用特殊字符和空格
+
+### 2. 路径设计
+
+- 使用 RESTful 风格：`/users`、`/users/:id`、`/users/:id/edit`
+- 保持路径简洁明了
+- 避免过深的嵌套层级（建议不超过 3 层）
+
+### 3. 权限配置
+
+- 为每个路由明确配置 `roles`，避免权限漏洞
+- 使用最小权限原则，只给必要的角色分配权限
+- 常量路由（如登录页）设置 `constant: true`
+
+### 4. 图标选择
+
+- 优先使用 Iconify 图标，资源丰富且统一
+- 图标名称要语义化，便于理解
+- 保持图标风格一致
+
+### 5. 缓存策略
+
+- 列表页面建议开启缓存（`keepAlive: true`）
+- 表单页面建议关闭缓存，避免数据残留
+- 详情页面根据业务需求决定
+
+### 6. 菜单组织
+
+- 合理使用目录分组，避免菜单过长
+- 通过 `order` 控制菜单顺序
+- 隐藏不需要在菜单中显示的路由（如详情页）
+
+### 7. 布局选择
+
+- **默认布局**: 大多数后台管理页面使用 `layout.Base`（包含侧边栏菜单的标准布局）
+- **自定义布局**: 根据业务需求创建不同的布局组件，例如：
+  - 全屏布局（无侧边栏、无头部）
+  - 双栏布局（左右分栏）
+  - 卡片式布局（卡片容器）
+  - 仪表板布局（多列网格）
+- **布局继承**: 子路由会继承父路由的布局，除非明确指定不同的布局
+- **灵活组合**: 充分利用本框架支持多布局组合的特性，为不同业务场景选择最合适的布局
+
+## 完整示例
+
+以下是一个完整的用户管理模块的路由配置示例：
+
+```json
+{
+  "name": "user_management",
+  "path": "/user-management",
+  "layout": "layout.Base",
+  "handle": {
+    "title": "用户管理",
+    "icon": "mdi:account-group",
+    "order": 1
+  },
+  "children": [
+    {
+      "name": "user_list",
+      "path": "list",
+      "component": "page.UserList",
+      "handle": {
+        "title": "用户列表",
+        "icon": "mdi:account-multiple",
+        "order": 1,
+        "keepAlive": true,
+        "roles": ["admin", "manager"],
+        "query": [
+          { "key": "page", "value": "1" },
+          { "key": "size", "value": "10" }
+        ]
+      }
+    },
+    {
+      "name": "user_detail",
+      "path": ":id",
+      "component": "page.UserDetail",
+      "handle": {
+        "title": "用户详情",
+        "hideInMenu": true,
+        "activeMenu": "user_list",
+        "keepAlive": true,
+        "roles": ["admin", "manager"]
+      }
+    },
+    {
+      "name": "user_create",
+      "path": "create",
+      "component": "page.UserCreate",
+      "handle": {
+        "title": "新建用户",
+        "hideInMenu": true,
+        "activeMenu": "user_list",
+        "roles": ["admin"]
+      }
+    },
+    {
+      "name": "user_edit",
+      "path": ":id/edit",
+      "component": "page.UserEdit",
+      "handle": {
+        "title": "编辑用户",
+        "hideInMenu": true,
+        "activeMenu": "user_list",
+        "roles": ["admin"]
+      }
+    }
+  ]
+}
+```
+
+对应的前端页面结构：
+
+```
+src/pages/
+├── user-management/
+│   ├── index.tsx          # 用户管理主页面（可选）
+│   ├── list/
+│   │   └── index.tsx      # 用户列表页面
+│   ├── detail/
+│   │   └── [id]/
+│   │       └── index.tsx  # 用户详情页面
+│   ├── create/
+│   │   └── index.tsx      # 新建用户页面
+│   └── edit/
+│       └── [id]/
+│           └── index.tsx  # 编辑用户页面
+```
+
+对应的组件注册：
+
+```ts
+// src/router/elegant/imports.ts
+export const pages = {
+  UserList: () => import('@/pages/user-management/list'),
+  UserDetail: () => import('@/pages/user-management/detail/[id]'),
+  UserCreate: () => import('@/pages/user-management/create'),
+  UserEdit: () => import('@/pages/user-management/edit/[id]'),
+};
+```
+
+## 相关文档
+
+- [路由初始化](/routes/init) - 了解路由初始化流程
+- [路由元信息](/routes/handle) - 路由元信息详细说明
+- [后端路由转换](/routes/transform) - 路由转换规则
+- [路由守卫](/routes/guard) - 路由权限控制
+
+## 总结
+
+创建动态路由需要以下步骤：
+
+1. ✅ 创建前端页面组件
+2. ✅ 在组件映射中注册
+3. ✅ 在后端配置路由元信息
+4. ✅ 验证路由功能
+
+通过合理配置路由元信息，你可以实现：
+- 灵活的权限控制
+- 优雅的菜单展示
+- 智能的路由缓存
+- 完善的用户体验
+
+如有问题，请参考常见问题部分或查阅相关文档。

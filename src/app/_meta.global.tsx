@@ -80,6 +80,7 @@ const AUTH_ITEMS: MetaRecord = {
   // eslint-disable-next-line sort/object-properties
   index: '概述',
   control: '权限控制',
+  'create-dynamic-route': '创建动态路由',
   menu: '菜单管理',
   tabs: '标签页管理'
 };
